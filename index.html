@@ -1,0 +1,553 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>프론트엔드 아키텍처 보일러플레이트 포트폴리오</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="#top">프론트엔드 아키텍처 보일러플레이트</a>
+      <nav aria-label="포트폴리오 내비게이션">
+        <a href="#summary">요약</a>
+        <a href="#architecture">아키텍처</a>
+        <a href="#ops-console">운영 콘솔</a>
+        <a href="#wod-planner">WOD Planner</a>
+        <a href="#ai-workflow">AI 워크플로우</a>
+        <a href="#platform">플랫폼</a>
+        <a href="#result">결과</a>
+        <a href="#appendix">부록</a>
+      </nav>
+    </header>
+
+    <main id="top">
+      <div class="pdf-page">
+        <section class="hero section-band">
+          <div class="hero-copy">
+            <p class="eyebrow">사례 연구</p>
+            <h1>Vue, React, Next.js를 아우르는 확장 가능한 프론트엔드 보일러플레이트 설계</h1>
+            <p class="hero-text">
+              런타임 API 안정성, UI와 로직 분리, Storybook 기반 UI 문서화, 프레임워크별 상태 소유권을 중심으로
+              정리한 프론트엔드 아키텍처 프로젝트입니다.
+            </p>
+            <div class="meta-grid" aria-label="프로젝트 메타 정보">
+              <div><span>역할</span><strong>프론트엔드 아키텍처 / UI 시스템</strong></div>
+              <div><span>유형</span><strong>개인 아키텍처 프로젝트</strong></div>
+              <div><span>범위</span><strong>Vue, React, Next.js 보일러플레이트</strong></div>
+              <div><span>초점</span><strong>타입 안정성, RSC 경계, 상태 전략</strong></div>
+            </div>
+          </div>
+          <div class="hero-visual" aria-label="프로젝트 개요 패널">
+            <div class="preview-window">
+              <div class="window-bar"><span></span><span></span><span></span></div>
+              <div class="preview-grid">
+                <article>
+                  <strong>Vue 보일러플레이트</strong>
+                  <p>Pinia, Vue Router, Atomic UI, Storybook, DTO 검증</p>
+                  <div class="meter"><span style="width: 88%"></span></div>
+                </article>
+                <article>
+                  <strong>React 보일러플레이트</strong>
+                  <p>TanStack Query, Zustand, HOC, MSW, View/Container 구조</p>
+                  <div class="meter"><span style="width: 92%"></span></div>
+                </article>
+                <article class="wide">
+                  <strong>Next.js 보일러플레이트</strong>
+                  <p>Server Components, Server Actions, 쿠키 세션, hydration-safe 날짜 처리</p>
+                  <code>서버 우선 상태 소유권</code>
+                </article>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="section" id="summary">
+          <div class="section-heading">
+            <p class="eyebrow">요약</p>
+            <h2>프로젝트 개요</h2>
+            <p>
+              목표는 단일 화면을 만드는 것이 아니라, 반복되는 초기 설정 비용을 줄이고 성장하는 프론트엔드 애플리케이션에
+              예측 가능한 개발 규칙을 세우는 것이었습니다.
+            </p>
+          </div>
+          <div class="problem-grid">
+            <article class="card">
+              <span class="card-index">과제 01</span>
+              <h3>런타임 API 안정성</h3>
+              <p>TypeScript만으로는 실제 API payload를 검증할 수 없어 API 경계에 DTO 검증을 추가했습니다.</p>
+            </article>
+            <article class="card">
+              <span class="card-index">과제 02</span>
+              <h3>UI와 로직 분리</h3>
+              <p>React는 View/Container/HOC, Vue는 composable/store, Next.js는 server/client 소유권 분리를 적용했습니다.</p>
+            </article>
+            <article class="card">
+              <span class="card-index">과제 03</span>
+              <h3>Hydration과 상태 소유권</h3>
+              <p>Next.js 상태를 server data, client cache, UI state, URL state, mutation 기준으로 분리했습니다.</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="section split" id="architecture">
+          <div>
+            <p class="eyebrow">아키텍처</p>
+            <h2>공통 설계 원칙</h2>
+            <p>
+              각 보일러플레이트는 프레임워크 런타임의 차이를 존중하면서도 같은 품질 기준을 따릅니다. API 계약,
+              상태 소유권, UI 상태, 테스트, 문서화를 모두 아키텍처의 일부로 다뤘습니다.
+            </p>
+            <ul class="check-list">
+              <li>UI 렌더링 전에 API envelope와 DTO 클래스를 검증</li>
+              <li>실패 원인을 프론트 계약, 백엔드, 네트워크, 인증 문제로 분류</li>
+              <li>로딩, 빈 상태, 오류 상태를 재사용 가능한 UI로 유지</li>
+              <li>lazy route boundary와 scoped import를 우선 적용</li>
+              <li>순수 UI는 Storybook으로 문서화하고 계약은 테스트로 검증</li>
+            </ul>
+          </div>
+          <img class="diagram-image" src="./assets/architecture.svg" alt="Boilerplate architecture diagram" />
+        </section>
+      </div>
+
+      <div class="pdf-page">
+        <section class="section">
+          <div class="section-heading">
+            <p class="eyebrow">구현</p>
+            <h2>프레임워크별 전략</h2>
+          </div>
+          <div class="compare-grid compare-grid-three">
+            <article class="compare-card vue">
+              <h3>Vue 3</h3>
+              <dl>
+                <div><dt>상태</dt><dd>Pinia</dd></div>
+                <div><dt>라우팅</dt><dd>Vue Router lazy route</dd></div>
+                <div><dt>UI</dt><dd>Atomic components + Storybook</dd></div>
+                <div><dt>목적</dt><dd>템플릿 기반의 빠른 화면 구성</dd></div>
+              </dl>
+            </article>
+            <article class="compare-card react">
+              <h3>React</h3>
+              <dl>
+                <div><dt>서버 상태</dt><dd>TanStack Query</dd></div>
+                <div><dt>클라이언트 상태</dt><dd>Zustand</dd></div>
+                <div><dt>구조</dt><dd>View, Container, hook, HOC</dd></div>
+                <div><dt>목적</dt><dd>테스트 가능한 UI/로직 분리</dd></div>
+              </dl>
+            </article>
+            <article class="compare-card next">
+              <h3>Next.js</h3>
+              <dl>
+                <div><dt>초기 데이터</dt><dd>Server Component</dd></div>
+                <div><dt>클라이언트 갱신</dt><dd>TanStack Query</dd></div>
+                <div><dt>UI 상태</dt><dd>Zustand</dd></div>
+                <div><dt>변경 작업</dt><dd>Server Action</dd></div>
+              </dl>
+            </article>
+          </div>
+        </section>
+
+        <section class="section split reverse">
+          <img class="diagram-image" src="./assets/api-error-flow.svg" alt="API error ownership flow diagram" />
+          <div>
+            <p class="eyebrow">API 안정성</p>
+            <h2>타입 기반 API와 오류 소유권</h2>
+            <p>
+              API 응답은 envelope 파싱과 DTO 검증을 거칩니다. DTO 불일치는 프론트엔드 계약 문제로 보고,
+              HTTP 실패는 백엔드 또는 네트워크 문제로 분류했습니다.
+            </p>
+            <pre><code>{
+  "success": true,
+  "data": {
+    "id": "u-1",
+    "email": "demo@example.com"
+  }
+}</code></pre>
+          </div>
+        </section>
+      </div>
+
+      <div class="pdf-page">
+        <section class="section" id="ops-console">
+          <div class="section-heading">
+            <p class="eyebrow">Next.js 확장 사례</p>
+            <h2>운영형 프론트엔드 콘솔</h2>
+            <p>
+              Next.js 보일러플레이트를 시니어 프론트엔드 역할에 맞는 증거 화면으로 확장했습니다. B2B 운영
+              콘솔 안에 런타임 DTO 검증, i18n, 클라이언트 실시간 업데이트, 릴리즈 모니터링, 디자인 시스템
+              재사용 경험을 함께 담았습니다.
+            </p>
+          </div>
+          <div class="ops-showcase">
+            <article class="ops-panel">
+              <div class="ops-toolbar">
+                <span></span>
+                <strong>Global Ops Console</strong>
+                <code>KO / EN</code>
+              </div>
+              <div class="ops-metrics" aria-label="운영 지표 미리보기">
+                <div><span>파트너 전환율</span><strong>34.8%</strong><em>good</em></div>
+                <div><span>API 지연시간 p95</span><strong>184ms</strong><em class="watch">watch</em></div>
+                <div><span>프론트 오류율</span><strong>0.18%</strong><em>good</em></div>
+                <div><span>LCP</span><strong>1.9s</strong><em>good</em></div>
+              </div>
+              <div class="ops-feed">
+                <p><strong>실시간 모니터</strong><span>WebSocket 연결이 재시도 후 정상 복구되었습니다.</span></p>
+                <p><strong>릴리즈 파이프라인</strong><span>프로덕션 배포가 CI 상태와 함께 검증되었습니다.</span></p>
+              </div>
+            </article>
+            <div class="evidence-grid ops-evidence">
+              <article class="evidence-card"><h3>서버 계약 검증</h3><p>UI 렌더링 전에 class-validator DTO로 API envelope를 검증합니다.</p><code>OpsConsole.dto.ts</code></article>
+              <article class="evidence-card"><h3>i18n</h3><p>타입이 잡힌 dictionary와 클라이언트 상태로 KO/EN 전환을 처리합니다.</p><code>opsDictionary</code></article>
+              <article class="evidence-card"><h3>실시간 UI</h3><p>서버에서 검증한 초기 데이터 위에 클라이언트 실시간 이벤트 피드를 얹었습니다.</p><code>LiveIncidentFeed</code></article>
+              <article class="evidence-card"><h3>운영 관점</h3><p>Core Web Vitals, 오류율, 지연시간, 릴리즈 상태를 운영 지표로 노출합니다.</p><code>/ops-console</code></article>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <div class="pdf-page">
+        <section class="section" id="wod-planner">
+          <div class="section-heading">
+            <p class="eyebrow">제품 MVP</p>
+            <h2>WOD Planner</h2>
+            <p>
+              CrossFit WOD와 HYROX 운동을 날짜별로 저장하고, 출석, 개인 기록, 통증 상태, 부위별 피로도를 함께 관리하는
+              개인 운동 플래닝 앱입니다. 단순 기록장을 넘어 다음 운동의 보조 운동 추천까지 이어지도록 설계했습니다.
+            </p>
+          </div>
+          <div class="wod-showcase">
+            <article class="wod-preview" aria-label="WOD Planner 미리보기">
+              <div class="wod-preview-bar">
+                <strong>WOD 플래너 MVP</strong>
+                <span>2026-06-04</span>
+              </div>
+              <div class="wod-preview-body">
+                <div class="wod-input-card">
+                  <span>오늘 WOD</span>
+                  <h3>기록 경쟁 WOD</h3>
+                  <p>400m 러닝 · 월볼 20회 · 버피 15회</p>
+                </div>
+                <div class="wod-score-card">
+                  <span>부위별 피로</span>
+                  <div><strong>대퇴사두</strong><em style="width: 82%"></em></div>
+                  <div><strong>어깨</strong><em style="width: 58%"></em></div>
+                  <div><strong>허리</strong><em style="width: 44%"></em></div>
+                </div>
+                <div class="wod-recommend-card">
+                  <span>추천</span>
+                  <h3>상체 보조 운동</h3>
+                  <p>하체 피로가 높아 오버헤드와 코어 중심 보조 운동을 우선 추천합니다.</p>
+                </div>
+              </div>
+            </article>
+            <div class="evidence-grid ops-evidence">
+              <article class="evidence-card"><h3>WOD 파서</h3><p>날짜, 섹션, 타임캡, 동작을 텍스트에서 추출하고 CrossFit/HYROX 타입을 구분합니다.</p><code>wodParser.ts</code></article>
+              <article class="evidence-card"><h3>피로도 계산</h3><p>오늘/내일 WOD, 최근 운동, 통증 플래그를 합산해 부위별 피로 점수를 계산합니다.</p><code>fatigueScorer.ts</code></article>
+              <article class="evidence-card"><h3>운동 추천</h3><p>하체, 후면사슬, 어깨 피로와 통증 상태를 바탕으로 피해야 할 동작과 추천 보조 운동을 제안합니다.</p><code>workoutRecommender.ts</code></article>
+              <article class="evidence-card"><h3>기록 관리</h3><p>출석 체크, WOD 결과, 세트별 기록, PB, 동작 빈도, 능력치 요약을 브라우저 로컬 상태로 관리합니다.</p><code>localStorage</code></article>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <div class="pdf-page">
+        <section class="section" id="ai-workflow">
+          <div class="section-heading">
+            <p class="eyebrow">AI 활용 프론트엔드 엔지니어링</p>
+            <h2>AI는 초안 엔진으로 쓰고, 아키텍처 판단은 사람이 소유합니다</h2>
+            <p>
+              보일러플레이트 위에 AI 활용 워크플로우를 추가했습니다. 구현 초안은 AI에게 맡기되, 런타임 경계,
+              API 계약, 상태 소유권, 성능, 접근성, 릴리즈 리스크 같은 시니어 프론트엔드 판단은 사람이
+              검토하고 결정하는 구조입니다.
+            </p>
+          </div>
+
+          <div class="ai-flow">
+            <article>
+              <span>1</span>
+              <h3>프롬프트 계약</h3>
+              <p>코드 생성 전에 목표, 범위, 제약, 검증 명령, 리뷰 관점을 먼저 정의합니다.</p>
+              <code>PROMPT_PLAYBOOK.md</code>
+            </article>
+            <article>
+              <span>2</span>
+              <h3>AI 초안 생성</h3>
+              <p>UI 초안, DTO/테스트 초안, 리팩토링 후보 탐색, E2E 시나리오 생성을 AI에게 맡깁니다.</p>
+              <code>AI_WORKFLOW.md</code>
+            </article>
+            <article>
+              <span>3</span>
+              <h3>사람의 리뷰</h3>
+              <p>Boundary 위치, 상태 소유권, API 계약, 접근성, 번들 영향을 사람이 검토합니다.</p>
+              <code>CODE_REVIEW_CHECKLIST.md</code>
+            </article>
+            <article>
+              <span>4</span>
+              <h3>검증 게이트</h3>
+              <p>자동화 검증이 통과해야만 AI가 만든 코드가 아키텍처에 맞는 것으로 인정합니다.</p>
+              <code>lint / typecheck / test / build / e2e</code>
+            </article>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-heading">
+            <p class="eyebrow">리팩토링 재현 사례</p>
+            <h2>Before / After: AI가 만든 리팩토링을 사람이 통제하는 방식</h2>
+            <p>
+              의도적으로 복잡하게 만든 운영 테이블 컴포넌트를 사용해, AI 초안을 기반으로 경계가 명확하고
+              테스트 가능한 구조로 나누는 과정을 보여줍니다.
+            </p>
+          </div>
+          <div class="before-after">
+            <article class="before-card">
+              <p class="eyebrow">이전</p>
+              <h3>LegacyOpsTable.client.tsx</h3>
+              <ul>
+                <li>검색 상태, 필터링, 라벨, 테이블 렌더링이 하나의 client 파일에 섞여 있음</li>
+                <li>비즈니스 라벨이 JSX 내부에 직접 박혀 있음</li>
+                <li>전체 컴포넌트를 렌더링하지 않으면 테스트하기 어려움</li>
+                <li>서버 데이터 구조로 옮기기 전에 client boundary가 불필요하게 큼</li>
+              </ul>
+              <pre><code>Client component
+  - 입력 상태
+  - 필터 로직
+  - 상태 라벨
+  - 테이블 마크업</code></pre>
+            </article>
+            <article class="after-card">
+              <p class="eyebrow">이후</p>
+              <h3>OpsTable.client.tsx + OpsTableView</h3>
+              <ul>
+                <li>client 컴포넌트는 검색어 상태만 소유</li>
+                <li>필터링과 상태 라벨 로직을 pure function으로 분리</li>
+                <li>View 계층은 서버에서 검증된 row 데이터를 받을 수 있음</li>
+                <li>브라우저 렌더링 없이 로직 회귀 테스트 가능</li>
+              </ul>
+              <pre><code>Client component
+  - 로컬 검색 상태
+Pure logic
+  - filterOpsRows()
+  - getStatusLabel()
+View
+  - DataTable</code></pre>
+            </article>
+          </div>
+        </section>
+      </div>
+
+      <div class="pdf-page">
+        <section class="section">
+          <div class="section-heading">
+            <p class="eyebrow">역할 분리 매트릭스</p>
+            <h2>AI는 초안을 만들고, 사람은 제품 수준의 판단을 소유합니다</h2>
+          </div>
+          <div class="matrix">
+            <div class="matrix-head">AI에게 맡기는 일</div>
+            <div class="matrix-head">사람이 책임지는 일</div>
+            <div>컴포넌트 초안과 반복 UI variant 생성</div>
+            <div>Server/Client Component 경계와 hydration 리스크 판단</div>
+            <div>DTO, schema, 테스트 초안 작성</div>
+            <div>API 계약 형태와 하위 호환성 결정</div>
+            <div>리팩토링 후보 탐색과 기계적인 분리 작업</div>
+            <div>상태 소유권 결정: server, cache, URL, local, Zustand</div>
+            <div>Storybook 상태와 E2E 시나리오 초안 생성</div>
+            <div>접근성 기준, UX 수용 기준, 릴리즈 리스크 판단</div>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-heading">
+            <p class="eyebrow">검증 파이프라인</p>
+            <h2>AI 결과물은 파이프라인을 통과하기 전까지 받아들이지 않습니다</h2>
+          </div>
+          <div class="verify-panel">
+            <pre><code>npm run lint
+npm run typecheck
+npm run test
+npm run build
+npm run e2e
+npm run check:automation</code></pre>
+            <div class="verify-results">
+              <article><strong>12</strong><span>테스트 파일</span></article>
+              <article><strong>25</strong><span>unit / a11y 테스트</span></article>
+              <article><strong>8</strong><span>E2E 테스트</span></article>
+              <article><strong>Pass</strong><span>프로덕션 빌드</span></article>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <div class="pdf-page">
+        <section class="section" id="platform">
+          <div class="section-heading">
+            <p class="eyebrow">프론트엔드 플랫폼</p>
+            <h2>React, Vue, Next 보일러플레이트를 하나의 프론트엔드 플랫폼으로 정렬</h2>
+            <p>
+              세 개의 보일러플레이트를 단순 샘플 프로젝트가 아니라, 여러 앱과 공통 패키지가 같은 품질 기준을
+              공유하는 모노레포형 프론트엔드 플랫폼 사례로 재구성했습니다.
+            </p>
+          </div>
+          <div class="mono-layout">
+            <article class="mono-tree">
+              <h3>목표 모노레포 구조</h3>
+              <pre><code>frontend-platform
+  apps/
+    next-web
+    react-admin
+    vue-console
+  packages/
+    ui
+    contracts
+    config
+    testing
+    ai-workflow</code></pre>
+            </article>
+            <div class="mono-cards">
+              <article>
+                <h3>apps</h3>
+                <p>Next, React, Vue 앱은 각 런타임 특성을 유지하되 동일한 품질 게이트를 공유합니다.</p>
+                <code>next / react / vue</code>
+              </article>
+              <article>
+                <h3>packages/ui</h3>
+                <p>공통 UI, 상태 컴포넌트, Storybook 문서화를 패키지 단위로 관리하는 구조를 가정합니다.</p>
+                <code>design system</code>
+              </article>
+              <article>
+                <h3>packages/contracts</h3>
+                <p>DTO, schema, API envelope, mock scenario를 앱과 분리해 계약 변경 영향을 줄입니다.</p>
+                <code>DTO / Zod / MSW</code>
+              </article>
+              <article>
+                <h3>packages/ai-workflow</h3>
+                <p>AI 프롬프트, 리뷰 체크리스트, check:ai 자동화를 공통 품질 기준으로 묶습니다.</p>
+                <code>check:ai</code>
+              </article>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <div class="pdf-page">
+        <section class="section">
+          <div class="section-heading">
+            <p class="eyebrow">CI/CD 품질 게이트</p>
+            <h2>프레임워크가 달라도 같은 검증 파이프라인을 통과해야 합니다</h2>
+            <p>
+              GitHub Actions와 npm script를 중심으로 품질 게이트를 구성했습니다. Jenkins를 쓰더라도 같은
+              npm script를 호출하면 동일한 검증 기준을 재사용할 수 있습니다.
+            </p>
+          </div>
+          <div class="pipeline">
+            <article><span>01</span><strong>install</strong><p>lockfile 기반 의존성 설치</p></article>
+            <article><span>02</span><strong>lint</strong><p>금지 패턴과 컨벤션 검사</p></article>
+            <article><span>03</span><strong>typecheck</strong><p>strict TypeScript 검증</p></article>
+            <article><span>04</span><strong>test</strong><p>unit, DTO, a11y 테스트</p></article>
+            <article><span>05</span><strong>check:ai</strong><p>AI 문서, PR 템플릿, 리뷰 기준 누락 검사</p></article>
+            <article><span>06</span><strong>build</strong><p>프로덕션 번들 생성</p></article>
+            <article><span>07</span><strong>bundle</strong><p>번들 예산과 dependency 크기 검사</p></article>
+            <article><span>08</span><strong>storybook</strong><p>공통 UI 문서 빌드</p></article>
+          </div>
+          <div class="pipeline-note">
+            <pre><code>GitHub Actions / Jenkins
+  -> npm run check:ci
+  -> npm run check:ai
+  -> npm run check:bundle
+  -> npm run build-storybook</code></pre>
+            <p>
+              핵심은 특정 CI 도구가 아니라, 품질 기준을 npm script로 고정해 GitHub Actions와 Jenkins 양쪽에서
+              같은 검증을 재사용할 수 있게 만드는 것입니다.
+            </p>
+          </div>
+        </section>
+      </div>
+
+      <div class="pdf-page">
+        <section class="section" id="result">
+          <div class="section-heading">
+            <p class="eyebrow">결과</p>
+            <h2>검증된 산출물</h2>
+            <p>
+              보일러플레이트에는 CI 명령어, Storybook, DTO 테스트, client/server 경계 문서, 보안 감사 확인 항목이
+              포함되어 있습니다.
+            </p>
+          </div>
+          <div class="evidence-grid evidence-grid-five">
+            <article class="evidence-card"><h3>CI 게이트</h3><p>lint, typecheck, test, production build, Storybook build를 검증합니다.</p><code>check:ci</code></article>
+            <article class="evidence-card"><h3>보안 점검</h3><p>moderate 수준의 audit 검사가 통과되도록 기준을 둡니다.</p><code>npm audit</code></article>
+            <article class="evidence-card"><h3>Storybook</h3><p>순수 UI 컴포넌트를 독립적으로 문서화합니다.</p><code>Button, Card</code></article>
+            <article class="evidence-card"><h3>MSW</h3><p>mock API 계약으로 프론트엔드 테스트를 지원합니다.</p><code>handlers.ts</code></article>
+            <article class="evidence-card"><h3>Next 경계</h3><p>상태 소유권, RSC 규칙, hydration-safe 날짜 hook을 정리했습니다.</p><code>BOUNDARY_GUIDE</code></article>
+            <article class="evidence-card"><h3>운영 콘솔</h3><p>DTO 검증, i18n, live feed, Web Vitals, 릴리즈 상태를 포함합니다.</p><code>/ops-console</code></article>
+          </div>
+        </section>
+      </div>
+
+      <div class="pdf-page pdf-page-last">
+        <section class="section">
+          <div class="section-heading">
+            <p class="eyebrow">기술 결정</p>
+            <h2>핵심 결정</h2>
+          </div>
+          <div class="decision-list">
+            <article><h3>런타임 DTO 검증</h3><p>UI가 데이터를 받기 전에 런타임에서 검증해 API 계약 drift를 줄였습니다.</p></article>
+            <article><h3>Next.js 상태 소유권</h3><p>초기 데이터는 server-first로 유지하고, TanStack Query는 인터랙티브 갱신에만 사용했습니다.</p></article>
+            <article><h3>styled-components 제외</h3><p>CSS Modules, SCSS Modules, CSS variables로 Server Components와 hydration을 단순하게 유지했습니다.</p></article>
+          </div>
+        </section>
+
+        <section class="section" id="appendix">
+          <div class="section-heading">
+            <p class="eyebrow">부록</p>
+            <h2>프로젝트 구조</h2>
+            <p>폴더 경계는 이후 AI 보조 개발에서도 구조를 쉽게 추론할 수 있도록 설계했습니다.</p>
+          </div>
+          <div class="folder-map">
+            <pre><code>react-boilerplate
+src/components
+src/features
+src/hoc
+src/hooks
+src/core
+src/test/msw</code></pre>
+            <pre><code>boilplate
+src/components
+src/stores
+src/router
+src/api
+tests/performance
+storybook</code></pre>
+            <pre><code>next-boilerplate
+app
+src/features/*/server
+src/features/*/actions
+src/components/client
+src/hoc/server
+src/stores</code></pre>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-heading">
+            <p class="eyebrow">다음 단계</p>
+            <h2>확장 계획</h2>
+          </div>
+          <div class="roadmap">
+            <article><span>1</span><h3>디자인 토큰</h3><p>Figma token을 CSS variables와 프레임워크별 preset으로 연결합니다.</p></article>
+            <article><span>2</span><h3>생성기</h3><p>feature, DTO, story, test, route 파일을 일관된 규칙으로 생성합니다.</p></article>
+            <article><span>3</span><h3>프로덕션 인증</h3><p>server boundary를 유지하면서 demo session을 실제 인증 provider로 교체합니다.</p></article>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <strong>프론트엔드 아키텍처 보일러플레이트</strong>
+      <span>Vue, React, Next.js 기반 확장 가능한 프론트엔드 구조 사례 연구입니다.</span>
+    </footer>
+
+    <script src="./main.js"></script>
+  </body>
+</html>

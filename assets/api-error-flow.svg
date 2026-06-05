@@ -1,0 +1,44 @@
+<svg width="920" height="620" viewBox="0 0 920 620" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="920" height="620" rx="24" fill="#FFFFFF"/>
+  <rect x="46" y="44" width="828" height="532" rx="20" fill="#F8FAFC" stroke="#DBE3EF"/>
+  <text x="74" y="96" fill="#182033" font-family="Arial, sans-serif" font-size="28" font-weight="800">API Error Ownership Flow</text>
+  <text x="74" y="128" fill="#647084" font-family="Arial, sans-serif" font-size="15">Every response goes through envelope parsing and DTO validation before UI rendering.</text>
+  <g>
+    <rect x="80" y="190" width="170" height="76" rx="12" fill="#FFFFFF" stroke="#CBD5E1"/>
+    <text x="118" y="222" fill="#182033" font-family="Arial, sans-serif" font-size="18" font-weight="800">Request</text>
+    <text x="112" y="246" fill="#647084" font-family="Arial, sans-serif" font-size="13">Axios interceptor</text>
+  </g>
+  <g>
+    <rect x="308" y="190" width="170" height="76" rx="12" fill="#FFFFFF" stroke="#CBD5E1"/>
+    <text x="346" y="222" fill="#182033" font-family="Arial, sans-serif" font-size="18" font-weight="800">Envelope</text>
+    <text x="342" y="246" fill="#647084" font-family="Arial, sans-serif" font-size="13">success / error</text>
+  </g>
+  <g>
+    <rect x="536" y="190" width="170" height="76" rx="12" fill="#FFFFFF" stroke="#CBD5E1"/>
+    <text x="580" y="222" fill="#182033" font-family="Arial, sans-serif" font-size="18" font-weight="800">DTO</text>
+    <text x="564" y="246" fill="#647084" font-family="Arial, sans-serif" font-size="13">class-validator</text>
+  </g>
+  <g>
+    <rect x="360" y="370" width="200" height="76" rx="12" fill="#ECFDF5" stroke="#86EFAC"/>
+    <text x="408" y="402" fill="#166534" font-family="Arial, sans-serif" font-size="18" font-weight="800">Render UI</text>
+    <text x="400" y="426" fill="#15803D" font-family="Arial, sans-serif" font-size="13">typed data only</text>
+  </g>
+  <path d="M250 228H308" stroke="#647084" stroke-width="3" stroke-linecap="round"/>
+  <path d="M478 228H536" stroke="#647084" stroke-width="3" stroke-linecap="round"/>
+  <path d="M620 266V330C620 352 598 370 560 396" stroke="#647084" stroke-width="3" stroke-linecap="round"/>
+  <path d="M393 266V330C393 352 414 370 460 396" stroke="#647084" stroke-width="3" stroke-linecap="round"/>
+  <g>
+    <rect x="94" y="404" width="180" height="88" rx="12" fill="#FFF1F2" stroke="#FDA4AF"/>
+    <text x="126" y="438" fill="#BE123C" font-family="Arial, sans-serif" font-size="18" font-weight="800">Network</text>
+    <text x="116" y="464" fill="#BE123C" font-family="Arial, sans-serif" font-size="13">no response</text>
+  </g>
+  <g>
+    <rect x="646" y="404" width="180" height="88" rx="12" fill="#FEF3C7" stroke="#FBBF24"/>
+    <text x="682" y="438" fill="#92400E" font-family="Arial, sans-serif" font-size="18" font-weight="800">Backend</text>
+    <text x="668" y="464" fill="#92400E" font-family="Arial, sans-serif" font-size="13">HTTP or error envelope</text>
+  </g>
+  <g>
+    <rect x="370" y="500" width="180" height="50" rx="12" fill="#EEF2FF" stroke="#A5B4FC"/>
+    <text x="398" y="531" fill="#3730A3" font-family="Arial, sans-serif" font-size="16" font-weight="800">Frontend DTO mismatch</text>
+  </g>
+</svg>

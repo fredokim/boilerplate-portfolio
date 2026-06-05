@@ -1,0 +1,51 @@
+<svg width="920" height="620" viewBox="0 0 920 620" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="920" height="620" rx="24" fill="#FFFFFF"/>
+  <rect x="42" y="42" width="836" height="536" rx="20" fill="#F8FAFC" stroke="#DBE3EF"/>
+  <text x="70" y="92" fill="#182033" font-family="Arial, sans-serif" font-size="28" font-weight="800">Typed UI Boilerplate Architecture</text>
+  <text x="70" y="124" fill="#647084" font-family="Arial, sans-serif" font-size="15">Vue and React share API contracts, validation, UI states, testing, and automation.</text>
+  <g>
+    <rect x="70" y="170" width="220" height="100" rx="14" fill="#EAF7EF" stroke="#8BD3A7"/>
+    <text x="96" y="210" fill="#14532D" font-family="Arial, sans-serif" font-size="22" font-weight="800">Vue 3</text>
+    <text x="96" y="240" fill="#166534" font-family="Arial, sans-serif" font-size="15">Pinia · Router · Atomic UI</text>
+  </g>
+  <g>
+    <rect x="630" y="170" width="220" height="100" rx="14" fill="#EEF6FF" stroke="#93C5FD"/>
+    <text x="656" y="210" fill="#1D4ED8" font-family="Arial, sans-serif" font-size="22" font-weight="800">React</text>
+    <text x="656" y="240" fill="#2563EB" font-family="Arial, sans-serif" font-size="15">Query · Zustand · HOC</text>
+  </g>
+  <g>
+    <rect x="350" y="168" width="220" height="104" rx="14" fill="#FFFFFF" stroke="#CBD5E1"/>
+    <text x="386" y="209" fill="#182033" font-family="Arial, sans-serif" font-size="21" font-weight="800">API Contract</text>
+    <text x="384" y="240" fill="#647084" font-family="Arial, sans-serif" font-size="15">Envelope + DTO classes</text>
+  </g>
+  <path d="M290 220H350" stroke="#647084" stroke-width="3" stroke-linecap="round"/>
+  <path d="M570 220H630" stroke="#647084" stroke-width="3" stroke-linecap="round"/>
+  <g>
+    <rect x="94" y="350" width="166" height="76" rx="12" fill="#FFFFFF" stroke="#CBD5E1"/>
+    <text x="126" y="382" fill="#182033" font-family="Arial, sans-serif" font-size="17" font-weight="800">Storybook</text>
+    <text x="120" y="407" fill="#647084" font-family="Arial, sans-serif" font-size="13">pure UI review</text>
+  </g>
+  <g>
+    <rect x="284" y="350" width="166" height="76" rx="12" fill="#FFFFFF" stroke="#CBD5E1"/>
+    <text x="324" y="382" fill="#182033" font-family="Arial, sans-serif" font-size="17" font-weight="800">MSW</text>
+    <text x="312" y="407" fill="#647084" font-family="Arial, sans-serif" font-size="13">mock API tests</text>
+  </g>
+  <g>
+    <rect x="474" y="350" width="166" height="76" rx="12" fill="#FFFFFF" stroke="#CBD5E1"/>
+    <text x="512" y="382" fill="#182033" font-family="Arial, sans-serif" font-size="17" font-weight="800">CI Gate</text>
+    <text x="506" y="407" fill="#647084" font-family="Arial, sans-serif" font-size="13">lint type test</text>
+  </g>
+  <g>
+    <rect x="664" y="350" width="166" height="76" rx="12" fill="#FFFFFF" stroke="#CBD5E1"/>
+    <text x="700" y="382" fill="#182033" font-family="Arial, sans-serif" font-size="17" font-weight="800">Bundle</text>
+    <text x="692" y="407" fill="#647084" font-family="Arial, sans-serif" font-size="13">lazy chunks</text>
+  </g>
+  <path d="M460 272V320" stroke="#647084" stroke-width="3" stroke-linecap="round"/>
+  <path d="M178 320H746" stroke="#647084" stroke-width="3" stroke-linecap="round"/>
+  <path d="M178 320V350" stroke="#647084" stroke-width="3" stroke-linecap="round"/>
+  <path d="M367 320V350" stroke="#647084" stroke-width="3" stroke-linecap="round"/>
+  <path d="M557 320V350" stroke="#647084" stroke-width="3" stroke-linecap="round"/>
+  <path d="M746 320V350" stroke="#647084" stroke-width="3" stroke-linecap="round"/>
+  <rect x="178" y="490" width="564" height="44" rx="22" fill="#182033"/>
+  <text x="268" y="518" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="16" font-weight="800">Goal: 누구나 쉽게 확장하는 프론트엔드 개발 기반</text>
+</svg>
