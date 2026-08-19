@@ -2,64 +2,171 @@
 
 ## Project Summary
 
-Vue 3, React, Next.js 환경에서 확장 가능한 프론트엔드 개발 기반을 설계한 개인 프로젝트입니다. 단일 화면 구현보다 API 계약 안정성, UI와 로직의 책임 분리, 서버/클라이언트 경계, 상태관리 전략, 반복 작업 자동화, Storybook 기반 UI 문서화에 초점을 두었습니다.
+This portfolio case study explains how the Vue, React, and Next.js boilerplates were designed as a reusable frontend architecture baseline.
+
+The goal was not to create a single demo screen. The goal was to reduce repeated setup decisions and make API contracts, state ownership, component boundaries, UI states, testing, documentation, and automation visible from the start of a project.
 
 ## Role
 
-- Frontend architecture 설계
-- Vue 3 boilerplate 구성
-- React boilerplate 구성
-- Next.js boilerplate 구성
-- Atomic UI component 구조 정리
-- DTO 기반 API validation 계층 구성
-- Storybook, MSW, test, build automation 구성
+- Frontend architecture design
+- Vue 3 boilerplate structure
+- React boilerplate structure
+- Next.js boilerplate structure
+- Component responsibility design
+- DTO-based runtime API validation
+- Storybook, MSW, test, build, dependency, and bundle automation
+- AI-assisted development workflow and review criteria
 
-## Problem
+## Problem Definition
 
-- TypeScript 타입은 런타임 API 응답의 안정성을 보장하지 못합니다.
-- UI 컴포넌트에 API, 상태 관리, routing 로직이 섞이면 재사용과 테스트가 어려워집니다.
-- 매 프로젝트마다 Storybook, test, mock API, lint, build 설정을 반복하면 초기 세팅 비용이 커집니다.
+The project started from recurring frontend problems:
 
-## Solution
+- TypeScript types alone cannot validate real API payloads at runtime.
+- Components often mix API calls, state management, filtering, label conversion, event handling, and rendering.
+- Server state, client cache, URL state, local UI state, and global client state are not clearly separated.
+- Loading, empty, error, and invalid-data states are implemented differently per screen.
+- Storybook, MSW, tests, and CI checks are often added after the UI structure has already diverged.
+- AI-generated code can make repeated implementation faster, but without boundaries it can also spread inconsistent patterns.
 
-- API 응답을 envelope와 DTO class로 검증하는 통신 계층을 구성했습니다.
-- React 버전은 View, Container, hook, HOC로 책임을 분리했습니다.
-- Vue 버전은 Pinia, composable, lazy route, Atomic Design 구조를 적용했습니다.
-- Next.js 버전은 Server Component, Client Component, Server Action, Zustand, TanStack Query의 책임을 상태 소유권 기준으로 분리했습니다.
-- Storybook, MSW, Vitest, Playwright config, bundle analysis script를 기본 구성에 포함했습니다.
-- `npm run check:ci` 명령으로 lint, typecheck, test, build, Storybook build를 한 번에 검증하도록 구성했습니다.
+I defined this as an architecture problem, not just a setup problem. The boilerplate needed to make good defaults visible and repeatable.
 
-## Next.js State Strategy
+## Component Design Method
 
-- Initial route data: Server Component / server function
-- Client-side refresh/cache: TanStack Query
-- Global UI state: Zustand
-- Auth/session source: httpOnly cookie + server session
-- Mutation: Server Action
-- Shareable filter state: URL `searchParams`
-- Hydration-safe date UI: `SafeDate` / `useHydratedDate`
+The boilerplates split code by responsibility.
 
-## Verified Result
+| Responsibility | React | Vue | Next.js |
+| --- | --- | --- | --- |
+| Route/Page | lazy route | module route | App Router page |
+| Data/Orchestration | container | store/composable | server module/client wrapper |
+| Pure Rendering | view | view/component | view component |
+| Reusable UI | atomic UI | atomic UI | server-safe UI |
+| API Contract | DTO/API client | DTO/http client | DTO/server API |
+| State Ownership | TanStack Query/Zustand | Pinia/composable | Server Component/TanStack Query/Zustand/URL |
 
-React boilerplate 기준:
+The core rule is simple:
 
-```bash
-npm run check:ci
-npm audit --audit-level=moderate
-```
+Code that changes for different reasons should not live in the same place.
 
-결과:
+## Key Decisions
 
-- lint 통과
-- typecheck 통과
-- test 통과
-- production build 통과
-- Storybook build 통과
-- moderate 이상 취약점 0개
+### 1. Validate API data before UI rendering
 
-## Portfolio Assets
+API responses pass through envelope parsing and DTO validation before they reach UI components.
 
-- `index.html`: 제출용 케이스 스터디 페이지
-- `assets/architecture.svg`: 공통 아키텍처 다이어그램
-- `assets/api-error-flow.svg`: API 에러 출처 구분 흐름
-- `Frontend_Architecture_Boilerplate_Case_Study.pdf`: PDF 제출본
+Reason:
+
+- Runtime contract drift should fail near the API boundary.
+- UI components should receive trusted data.
+- Errors can be classified as frontend contract, backend response, network, or auth issues.
+
+### 2. Split state by ownership
+
+State is divided into server data, interactive cache, URL state, local UI state, and global client state.
+
+Reason:
+
+- Reloads, bookmarks, and back navigation become predictable.
+- UI convenience state does not pollute server data.
+- Global stores stay intentionally small.
+
+### 3. Keep views as pure as possible
+
+Views should render props and expose callbacks. Containers, stores, server modules, and hooks handle orchestration.
+
+Reason:
+
+- Views can be tested and documented in Storybook.
+- Refactoring UI does not require rewriting API logic.
+- AI-assisted refactors are easier to review when boundaries are explicit.
+
+### 4. Prefer server-first boundaries in Next.js
+
+Next.js uses Server Components for initial data and stable UI. Client Components are isolated to interactive leaves.
+
+Reason:
+
+- Reduce unnecessary client JavaScript.
+- Lower hydration risk.
+- Keep auth/session checks close to server boundaries.
+
+### 5. Include Storybook, MSW, and verification gates early
+
+Storybook, MSW, unit tests, accessibility checks, build checks, dependency checks, and bundle budgets are treated as architecture, not afterthoughts.
+
+Reason:
+
+- UI states can be reviewed before backend integration.
+- Edge cases are easier to reproduce.
+- Quality criteria are repeatable through commands, not memory.
+
+## Results
+
+- React, Vue, and Next.js boilerplates with aligned architecture principles.
+- Runtime DTO/API contract validation.
+- Storybook-ready UI and state components.
+- MSW scenarios for success, empty, invalid DTO, backend error, and timeout states.
+- CI-friendly verification commands for lint, typecheck, test, build, Storybook build, dependency review, and bundle budgets.
+- AI workflow documents, prompt playbook, code review checklist, and refactoring case study.
+- Next.js `/ops-console` proof surface for B2B dashboard, i18n, live updates, DTO validation, release status, and performance metrics.
+
+## Retrospective
+
+## React Interactive Examples
+
+The React boilerplate also contains three implementation examples with deliberately different maturity levels.
+
+### Dashboard Builder
+
+- 12-column draggable and resizable widget layout.
+- Registry-based KPI, chart, and table widget plugins with per-widget configuration editors.
+- Draft/save/cancel and undo/redo flows, JSON import/export, permission checks, and local persistence.
+- Global, local, and cross-widget filters coordinated through an event bus.
+- Data-source registry, refresh policies, personalization presets, Storybook scenarios, and focused unit tests.
+
+### Visual Graph / Topology Editor
+
+- Typed graph document and presentation resolver separated from independently streamed runtime state.
+- Batched runtime updates with duplicate, stale, dropped, coalesced, and unknown-entity diagnostics.
+- Node health filters, selected-node metrics and history, stale indicators, reconnect, and resync behavior.
+- Mock realtime transport plus unit tests for the runtime store and controller.
+
+### Live Streaming + Realtime Chat
+
+This is currently an initial browser-side experiment, not a production streaming implementation.
+
+- Progressive MP4 playback with basic player state display.
+- Mock realtime chat behind an adapter interface with connection-state feedback.
+- A composed Storybook view for the video and chat layout.
+- HLS/LL-HLS, QoE observability, high-volume chat processing, synchronization, and recovery logic are not yet implemented in the repository.
+
+## Retrospective
+
+What worked:
+
+- The boilerplate became a record of technical decisions, not just a file template.
+- DTO validation and state ownership rules made the architecture easier to explain.
+- Storybook/MSW made UI edge cases visible.
+- AI-assisted development became safer when paired with review checklists and verification gates.
+
+Trade-offs:
+
+- The strict structure has upfront cost.
+- Small MVPs may not need every layer from day one.
+- DTOs, stories, and tests must be maintained to keep their value.
+
+Next improvements:
+
+- Split templates into lightweight, standard, and strict modes.
+- Add token generation from a single design-token source.
+- Expand auth, permission, feature flag, and observability examples.
+- Add more E2E and accessibility examples for complex table/form flows.
+
+## Related Files
+
+- `next-boilerplate/DESIGN_RATIONALE.md`
+- `react-boilerplate/DESIGN_RATIONALE.md`
+- `vue-boilerplate/DESIGN_RATIONALE.md`
+- `next-boilerplate/AI_REFACTORING_CASE_STUDY.md`
+- `react-boilerplate/AI_REFACTORING_CASE_STUDY.md`
+- `vue-boilerplate/AI_REFACTORING_CASE_STUDY.md`
+- `Frontend_Architecture_Boilerplate_Case_Study.pdf`

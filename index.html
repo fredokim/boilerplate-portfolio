@@ -13,6 +13,7 @@
         <a href="#summary">요약</a>
         <a href="#architecture">아키텍처</a>
         <a href="#ops-console">운영 콘솔</a>
+        <a href="#react-labs">React 구현 사례</a>
         <a href="#wod-planner">WOD Planner</a>
         <a href="#ai-workflow">AI 워크플로우</a>
         <a href="#platform">플랫폼</a>
@@ -107,6 +108,55 @@
             </ul>
           </div>
           <img class="diagram-image" src="./assets/architecture.svg" alt="Boilerplate architecture diagram" />
+        </section>
+      </div>
+
+      <div class="pdf-page">
+        <section class="section" id="react-labs">
+          <div class="section-heading">
+            <p class="eyebrow">React 확장 구현</p>
+            <h2>Dashboard Builder, Realtime Topology, Live Experience</h2>
+            <p>
+              React 보일러플레이트의 경계를 실제 상호작용이 많은 화면에 적용했습니다. 완성된 기능과 실험 단계의
+              기능을 구분하고, 현재 저장소에서 직접 확인할 수 있는 범위만 정리했습니다.
+            </p>
+          </div>
+          <div class="react-labs-grid">
+            <article class="react-lab-card">
+              <span class="react-lab-status">구현 · 테스트 포함</span>
+              <h3>Dashboard Builder</h3>
+              <p>12열 그리드에서 위젯 추가, 이동, 크기 변경, 설정, 저장/취소, undo/redo, JSON import/export를 처리합니다.</p>
+              <ul>
+                <li>KPI, chart, table을 registry 기반 plugin으로 렌더링</li>
+                <li>전역·로컬·위젯 간 필터와 refresh event 분리</li>
+                <li>데이터 소스 registry, 권한, 개인화 preset, 성능 debug 제공</li>
+              </ul>
+              <code>customizable-dashboard</code>
+            </article>
+            <article class="react-lab-card">
+              <span class="react-lab-status">구현 · 테스트 포함</span>
+              <h3>Visual Graph / Topology</h3>
+              <p>정적 graph 문서와 실시간 runtime 상태를 분리해 노드 상태, metric, stale 여부를 갱신합니다.</p>
+              <ul>
+                <li>batch 적용, 중복·stale event 무시, unknown entity 진단</li>
+                <li>상태별 필터, 선택 노드 이력, reconnect·resync 흐름</li>
+                <li>mock transport와 runtime store/controller 단위 테스트</li>
+              </ul>
+              <code>visual-graph/realtime</code>
+            </article>
+            <article class="react-lab-card react-lab-card--baseline">
+              <span class="react-lab-status">초기 베이스라인</span>
+              <h3>Live Streaming + Realtime Chat</h3>
+              <p>브라우저 video 상태와 실시간 채팅 연결 경계를 검토하기 위한 작은 실험 화면입니다.</p>
+              <ul>
+                <li>MP4 video source와 play/pause 상태 표시</li>
+                <li>adapter interface를 통한 mock 채팅 연결·메시지 수신</li>
+                <li>Storybook에서 화면 조합 확인</li>
+              </ul>
+              <p class="react-lab-note">HLS, QoE 관측성, 대규모 메시지 처리, 재연결 복구는 아직 구현 범위에 포함하지 않았습니다.</p>
+              <code>live-experience</code>
+            </article>
+          </div>
         </section>
       </div>
 

@@ -1275,3 +1275,37 @@ pre code {
     margin-top: 10px;
   }
 }
+.react-labs-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.react-lab-card {
+  display: flex;
+  min-height: 360px;
+  flex-direction: column;
+  padding: 24px;
+  border: 1px solid #d8e1ee;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 14px 35px rgb(15 23 42 / 7%);
+}
+
+.react-lab-card--baseline {
+  border-style: dashed;
+  background: #f8fafc;
+}
+
+.react-lab-card h3 { margin: 14px 0 8px; font-size: 21px; }
+.react-lab-card p, .react-lab-card li { color: #475569; line-height: 1.65; }
+.react-lab-card ul { margin: 10px 0 18px; padding-left: 20px; }
+.react-lab-card code { margin-top: auto; color: #1d4ed8; font-weight: 700; }
+.react-lab-status { width: fit-content; padding: 5px 9px; border-radius: 999px; background: #dbeafe; color: #1e40af; font-size: 12px; font-weight: 800; }
+.react-lab-card--baseline .react-lab-status { background: #e2e8f0; color: #475569; }
+.react-lab-note { padding: 10px 12px; border-left: 3px solid #94a3b8; background: #fff; font-size: 13px; }
+
+@media (max-width: 900px) {
+  .react-labs-grid { grid-template-columns: 1fr; }
+  .react-lab-card { min-height: auto; }
+}
