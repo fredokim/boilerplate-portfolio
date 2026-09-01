@@ -1,0 +1,3 @@
+# Build output of build-shareable.py, regenerated on demand rather than
+# committed: a checked-in copy of the page drifts from the source files.
+dist/

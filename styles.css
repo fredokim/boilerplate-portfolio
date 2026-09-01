@@ -69,6 +69,13 @@ nav {
 .section-band {
   width: min(1180px, calc(100% - 40px));
   margin: 0 auto;
+}
+
+/* The reveal starts hidden only once the script has claimed it. Hiding by
+   default in CSS means the whole page is blank wherever the script does not
+   run: a thumbnail, a reader with scripting off, a saved copy. */
+.js-reveal .section,
+.js-reveal .section-band {
   opacity: 0;
   transform: translateY(14px);
   transition:
@@ -76,10 +83,19 @@ nav {
     transform 420ms ease;
 }
 
-.section.is-visible,
-.section-band.is-visible {
+.js-reveal .section.is-visible,
+.js-reveal .section-band.is-visible {
   opacity: 1;
   transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .js-reveal .section,
+  .js-reveal .section-band {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
 }
 
 .hero {
