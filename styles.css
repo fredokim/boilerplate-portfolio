@@ -439,6 +439,10 @@ pre code {
   grid-template-columns: repeat(5, minmax(0, 1fr));
 }
 
+.evidence-grid-three {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
 .ops-showcase {
   display: grid;
   grid-template-columns: minmax(420px, 1.1fr) minmax(0, 0.9fr);
@@ -1279,6 +1283,12 @@ pre code {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 18px;
+}
+
+/* Four cards in a three-column grid leave one stranded on its own row. Two by
+   two also gives the bullet lists room to breathe. */
+.react-labs-grid--four {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .react-lab-card {

@@ -14,6 +14,9 @@
         <a href="#architecture">아키텍처</a>
         <a href="#ops-console">운영 콘솔</a>
         <a href="#react-labs">React 구현 사례</a>
+        <a href="#backend">백엔드</a>
+        <a href="#verification">검증</a>
+        <a href="#deploy">배포</a>
         <a href="#wod-planner">WOD Planner</a>
         <a href="#ai-workflow">AI 워크플로우</a>
         <a href="#platform">플랫폼</a>
@@ -30,13 +33,14 @@
             <h1>Vue, React, Next.js를 아우르는 확장 가능한 프론트엔드 보일러플레이트 설계</h1>
             <p class="hero-text">
               런타임 API 안정성, UI와 로직 분리, Storybook 기반 UI 문서화, 프레임워크별 상태 소유권을 중심으로
-              정리한 프론트엔드 아키텍처 프로젝트입니다.
+              정리한 프론트엔드 아키텍처 프로젝트입니다. React 보일러플레이트에는 같은 계약을 그대로 만족하는
+              NestJS 백엔드를 붙여, mock이 정의하던 경계를 실제 PostgreSQL 위에서 검증했습니다.
             </p>
             <div class="meta-grid" aria-label="프로젝트 메타 정보">
               <div><span>역할</span><strong>프론트엔드 아키텍처 / UI 시스템</strong></div>
               <div><span>유형</span><strong>개인 아키텍처 프로젝트</strong></div>
-              <div><span>범위</span><strong>Vue, React, Next.js 보일러플레이트</strong></div>
-              <div><span>초점</span><strong>타입 안정성, RSC 경계, 상태 전략</strong></div>
+              <div><span>범위</span><strong>Vue, React, Next.js 보일러플레이트 + NestJS 백엔드</strong></div>
+              <div><span>초점</span><strong>타입 안정성, 상태 전략, 계약 검증</strong></div>
             </div>
           </div>
           <div class="hero-visual" aria-label="프로젝트 개요 패널">
@@ -57,6 +61,11 @@
                   <strong>Next.js 보일러플레이트</strong>
                   <p>Server Components, Server Actions, 쿠키 세션, hydration-safe 날짜 처리</p>
                   <code>서버 우선 상태 소유권</code>
+                </article>
+                <article class="wide">
+                  <strong>NestJS 백엔드</strong>
+                  <p>Prisma, PostgreSQL, Argon2id 인증, 회전 리프레시 토큰, WebSocket 게이트웨이 2종</p>
+                  <code>프론트엔드 계약을 서버가 만족</code>
                 </article>
               </div>
             </div>
@@ -144,17 +153,173 @@
               </ul>
               <code>visual-graph/realtime</code>
             </article>
-            <article class="react-lab-card react-lab-card--baseline">
-              <span class="react-lab-status">초기 베이스라인</span>
+            <article class="react-lab-card">
+              <span class="react-lab-status">구현 · 실서버 연동</span>
               <h3>Live Streaming + Realtime Chat</h3>
-              <p>브라우저 video 상태와 실시간 채팅 연결 경계를 검토하기 위한 작은 실험 화면입니다.</p>
+              <p>브라우저 video 상태와 실시간 채팅을 다루는 화면입니다. 채팅은 실제 WebSocket 게이트웨이에 연결됩니다.</p>
               <ul>
-                <li>MP4 video source와 play/pause 상태 표시</li>
-                <li>adapter interface를 통한 mock 채팅 연결·메시지 수신</li>
-                <li>Storybook에서 화면 조합 확인</li>
+                <li>전송은 HTTP, 수신은 소켓 — 권한·멱등성·rate limit 구현을 한 곳에만 둡니다</li>
+                <li>순서 정렬, 중복 제거, 보존 한도, 배치 flush는 store가 소유</li>
+                <li>재연결 시 마지막 sequence부터 catch-up</li>
               </ul>
-              <p class="react-lab-note">HLS, QoE 관측성, 대규모 메시지 처리, 재연결 복구는 아직 구현 범위에 포함하지 않았습니다.</p>
+              <p class="react-lab-note">HLS와 QoE 관측성, 부하 기준선 측정은 아직 범위에 포함하지 않았습니다.</p>
               <code>live-experience</code>
+            </article>
+          </div>
+        </section>
+      </div>
+
+      <div class="pdf-page">
+        <section class="section" id="backend">
+          <div class="section-heading">
+            <p class="eyebrow">풀스택 확장</p>
+            <h2>mock이 정의하던 계약을 실제 서버로 옮기다</h2>
+            <p>
+              React 보일러플레이트는 MSW mock 위에서 동작하고 있었습니다. 그 mock이 서술하던 계약을 NestJS + Prisma +
+              PostgreSQL로 구현하되, 프론트엔드 코드는 바꾸지 않는 것을 조건으로 삼았습니다. 서버가 프론트에 맞추는
+              방향이어야 계약이 실제로 지켜지는지 확인할 수 있기 때문입니다.
+            </p>
+          </div>
+          <div class="react-labs-grid react-labs-grid--four">
+            <article class="react-lab-card">
+              <span class="react-lab-status">인증</span>
+              <h3>세션을 훔치기 어렵게</h3>
+              <p>Argon2id 해시와 회전 리프레시 토큰을 씁니다. 이미 사용된 토큰이 다시 제시되면 재사용으로 판단합니다.</p>
+              <ul>
+                <li>재사용 감지 시 해당 세션 패밀리 전체 폐기</li>
+                <li>존재하지 않는 계정도 실제 해시 연산을 수행해 응답 시간을 균일화</li>
+                <li>리프레시 토큰은 SHA-256으로 저장하고 응답 본문에 넣지 않음</li>
+              </ul>
+              <code>auth/session</code>
+            </article>
+            <article class="react-lab-card">
+              <span class="react-lab-status">데이터 일관성</span>
+              <h3>동시 수정과 스키마 없는 JSON</h3>
+              <p>대시보드 레이아웃은 낙관적 잠금으로, 개인화 JSON은 버전을 붙여 다룹니다.</p>
+              <ul>
+                <li>version 불일치 시 조용한 덮어쓰기 대신 409로 거부</li>
+                <li>JSON은 쓸 때와 읽을 때 양쪽에서 검증 — 이미 저장된 잘못된 데이터도 화면에 닿지 않음</li>
+                <li>그래프의 구조 버전과 런타임 sequence를 별도 카운터로 분리</li>
+              </ul>
+              <code>optimistic locking</code>
+            </article>
+            <article class="react-lab-card">
+              <span class="react-lab-status">실시간</span>
+              <h3>WebSocket 게이트웨이 2종</h3>
+              <p>토폴로지 이벤트와 라이브 채팅을 각각의 게이트웨이로 제공합니다.</p>
+              <ul>
+                <li>핸드셰이크 시 토큰 검증 — 실패하면 4401로 즉시 종료</li>
+                <li>느린 소비자는 큐를 키우지 않고 연결을 끊음</li>
+                <li>재연결 시 마지막 sequence부터 replay, 보존 범위를 벗어나면 resync 지시</li>
+              </ul>
+              <code>topology / live chat</code>
+            </article>
+            <article class="react-lab-card">
+              <span class="react-lab-status">계약 유지</span>
+              <h3>스펙이 코드보다 뒤처지지 않게</h3>
+              <p>OpenAPI 32개 경로를 코드에서 생성하고, 저장소의 스펙과 다르면 CI가 실패합니다.</p>
+              <ul>
+                <li>봉투 형식과 오류 코드를 프론트/서버가 공유</li>
+                <li>프론트의 소비자 계약 테스트가 스펙을 직접 검사</li>
+                <li>테이블 15개, 마이그레이션 5개는 CI의 실제 PostgreSQL에 적용해 확인</li>
+              </ul>
+              <code>openapi drift check</code>
+            </article>
+          </div>
+        </section>
+      </div>
+
+      <div class="pdf-page">
+        <section class="section" id="verification">
+          <div class="section-heading">
+            <p class="eyebrow">검증</p>
+            <h2>게이트가 전부 초록인 동안, 앱은 네 군데가 망가져 있었습니다</h2>
+            <p>
+              테스트, 타입체크, 빌드, 번들 예산, e2e가 모두 통과한 상태였습니다. 실제 PostgreSQL에 연결해 브라우저에서
+              직접 눌러보기 전까지는 네 가지 모두 드러나지 않았습니다. 이 절은 무엇을 만들었는지가 아니라,
+              무엇을 놓쳤고 그 게이트를 어떻게 고쳤는지에 대한 기록입니다.
+            </p>
+          </div>
+          <div class="react-labs-grid react-labs-grid--four">
+            <article class="react-lab-card">
+              <span class="react-lab-status">발견 01</span>
+              <h3>아무도 구현하지 않은 엔드포인트</h3>
+              <p>대시보드는 계속 사용자 목록을 요청하고 있었고, 서버에는 그 라우트가 없었습니다.</p>
+              <ul>
+                <li>계약 테스트가 <em>구현된 엔드포인트만</em> 손으로 나열해, 자기 자신과만 일치</li>
+                <li>이제 프론트 소스에서 호출 URL을 추출해 스펙과 대조</li>
+                <li>스펙에서 해당 경로를 지워 실제로 실패하는지 확인 후 복원</li>
+              </ul>
+              <code>404 on /api/users</code>
+            </article>
+            <article class="react-lab-card">
+              <span class="react-lab-status">발견 02</span>
+              <h3>서버 모드가 실시간 기능에 닿지 않음</h3>
+              <p>데이터 소스 스위치를 서버로 두어도 채팅과 토폴로지는 계속 mock이었고, 화면에는 "Connected"라고 표시됐습니다.</p>
+              <ul>
+                <li>서버 트랜스포트 2종이 만들어지고 단위 테스트까지 됐지만 어디에서도 import되지 않음</li>
+                <li>배선 지점이 mock 구현을 하드코딩</li>
+                <li>스위치가 실제로 선택하도록 고치고, 어댑터로 기존 store·컨트롤러는 그대로 유지</li>
+              </ul>
+              <code>VITE_DATA_MODE</code>
+            </article>
+            <article class="react-lab-card">
+              <span class="react-lab-status">발견 03</span>
+              <h3>토큰 갱신이 배선되지 않음</h3>
+              <p>세션이 액세스 토큰 수명에 맞춰 조용히 끝났습니다. 단일 비행 갱신 로직은 있었지만 호출되지 않았습니다.</p>
+              <ul>
+                <li>401에 한 번만 갱신하고 한 번만 재시도하도록 연결</li>
+                <li>동시 401 4건에서 갱신 요청이 정확히 1회 발생하는 것을 브라우저에서 확인</li>
+                <li>회전 토큰에서 병렬 갱신은 재사용으로 읽혀 세션 전체가 폐기됨</li>
+              </ul>
+              <code>refresh single flight</code>
+            </article>
+            <article class="react-lab-card">
+              <span class="react-lab-status">발견 04</span>
+              <h3>성공을 보고하지만 실행하지 않는 CI 단계</h3>
+              <p>CI의 시드 단계가 필수 환경변수 부재로 초반에 반환하면서, 대부분의 코드를 건드리지 않은 채 통과했습니다.</p>
+              <ul>
+                <li>시드 전체가 실행되도록 환경변수를 지정</li>
+                <li>두 번 연속 실행해 재실행 안전성까지 확인</li>
+                <li>컨테이너 스모크 테스트에 "클라이언트를 서빙하는가"를 추가</li>
+              </ul>
+              <code>seed coverage</code>
+            </article>
+          </div>
+        </section>
+      </div>
+
+      <div class="pdf-page">
+        <section class="section" id="deploy">
+          <div class="section-heading">
+            <p class="eyebrow">배포</p>
+            <h2>쿠키 속성 하나가 배포 형태를 결정했습니다</h2>
+            <p>
+              리프레시 토큰은 <code>sameSite: lax</code> 쿠키입니다. 프론트와 API를 서로 다른 호스트에 두면 브라우저가
+              이 쿠키를 보내지 않습니다. 로그인은 성공하고, 액세스 토큰이 만료되는 순간 세션이 이유 없이 끝납니다.
+              WebSocket 두 개도 리라이트 계층 뒤에서 같은 지점이 깨집니다. 그래서 배포 단위를 하나로 정했습니다.
+            </p>
+          </div>
+          <div class="evidence-grid">
+            <article class="evidence-card">
+              <h3>단일 오리진</h3>
+              <p>서버가 빌드된 프론트엔드를 함께 서빙합니다. 개발 환경의 Vite 프록시가 하던 역할을 프로덕션에서도 유지합니다.</p>
+              <code>CLIENT_DIR</code>
+            </article>
+            <article class="evidence-card">
+              <h3>경계 유지</h3>
+              <p>딥링크는 SPA로, 없는 API 경로는 JSON 404로 응답합니다. 라우트 누락이 HTML 200으로 둔갑하지 않습니다.</p>
+              <code>SPA fallback</code>
+            </article>
+            <article class="evidence-card">
+              <h3>부팅 시 거부</h3>
+              <p>프로덕션에서 쿠키 보안 설정이 꺼져 있으면 서버가 시작을 거부합니다. 평문 전송이 조용히 일어나지 않습니다.</p>
+              <code>COOKIE_SECURE</code>
+            </article>
+            <article class="evidence-card">
+              <h3>이미지 한 개</h3>
+              <p>프론트 빌드와 서버 빌드를 하나의 multi-stage 이미지로 굽고, CI가 컨테이너를 띄워 검증합니다.</p>
+              <code>Dockerfile</code>
             </article>
           </div>
         </section>
@@ -520,17 +685,17 @@ npm run check:automation</code></pre>
             <p class="eyebrow">결과</p>
             <h2>검증된 산출물</h2>
             <p>
-              보일러플레이트에는 CI 명령어, Storybook, DTO 테스트, client/server 경계 문서, 보안 감사 확인 항목이
-              포함되어 있습니다.
+              프론트엔드와 백엔드가 각각의 게이트를 가지고, 둘 사이의 계약은 별도 잡이 검사합니다. 아래 수치는
+              현재 저장소에서 실행되는 값입니다.
             </p>
           </div>
-          <div class="evidence-grid evidence-grid-five">
-            <article class="evidence-card"><h3>CI 게이트</h3><p>lint, typecheck, test, production build, Storybook build를 검증합니다.</p><code>check:ci</code></article>
-            <article class="evidence-card"><h3>보안 점검</h3><p>moderate 수준의 audit 검사가 통과되도록 기준을 둡니다.</p><code>npm audit</code></article>
-            <article class="evidence-card"><h3>Storybook</h3><p>순수 UI 컴포넌트를 독립적으로 문서화합니다.</p><code>Button, Card</code></article>
-            <article class="evidence-card"><h3>MSW</h3><p>mock API 계약으로 프론트엔드 테스트를 지원합니다.</p><code>handlers.ts</code></article>
-            <article class="evidence-card"><h3>Next 경계</h3><p>상태 소유권, RSC 규칙, hydration-safe 날짜 hook을 정리했습니다.</p><code>BOUNDARY_GUIDE</code></article>
-            <article class="evidence-card"><h3>운영 콘솔</h3><p>DTO 검증, i18n, live feed, Web Vitals, 릴리즈 상태를 포함합니다.</p><code>/ops-console</code></article>
+          <div class="evidence-grid evidence-grid-three">
+            <article class="evidence-card"><h3>CI 5개 잡</h3><p>프론트엔드, 서버, 실제 PostgreSQL 통합, 계약, 컨테이너를 각각 분리해 검증합니다.</p><code>5 jobs green</code></article>
+            <article class="evidence-card"><h3>테스트 506개</h3><p>프론트 171, 서버 단위 226, 서버 e2e 109. 이 밖에 Playwright 4개가 실제 브라우저를 띄웁니다.</p><code>171 / 226 / 109</code></article>
+            <article class="evidence-card"><h3>실제 데이터베이스</h3><p>마이그레이션 5개를 호스팅 PostgreSQL에 적용하고, 통합 테스트는 CI의 컨테이너 DB에서 돌립니다.</p><code>15 tables</code></article>
+            <article class="evidence-card"><h3>계약 검사</h3><p>OpenAPI 32경로를 코드에서 생성하고, 저장소 스펙과 어긋나면 실패합니다.</p><code>drift check</code></article>
+            <article class="evidence-card"><h3>컨테이너 검증</h3><p>이미지를 빌드해 띄우고 liveness, 클라이언트 서빙, 딥링크, API 404를 확인합니다.</p><code>docker smoke</code></article>
+            <article class="evidence-card"><h3>Storybook · MSW</h3><p>UI 컴포넌트 문서화와 mock 계약은 그대로 유지됩니다. 서버 모드에서는 mock이 번들에 포함되지 않습니다.</p><code>bundle budget</code></article>
           </div>
         </section>
       </div>

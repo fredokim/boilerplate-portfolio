@@ -1,6 +1,7 @@
 # Typed UI Boilerplate Portfolio
 
-Vue 3 보일러플레이트와 React 보일러플레이트를 소개하기 위한 정적 포트폴리오 페이지입니다.
+Vue 3, React, Next.js 보일러플레이트와, React 보일러플레이트에 붙인 NestJS 백엔드를 소개하기 위한
+정적 포트폴리오 페이지입니다.
 
 ## 포함 자료
 
@@ -8,6 +9,7 @@ Vue 3 보일러플레이트와 React 보일러플레이트를 소개하기 위�
 - 공통 아키텍처 다이어그램: `assets/architecture.svg`
 - API 에러 출처 흐름 다이어그램: `assets/api-error-flow.svg`
 - 포트폴리오 발표용 증빙 문서: `PORTFOLIO_EVIDENCE.md`
+- 운영 콘솔 증빙 문서: `OPS_CONSOLE_EVIDENCE.md`
 
 ## 실행
 
