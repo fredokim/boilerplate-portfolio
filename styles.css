@@ -329,6 +329,11 @@ code {
   color: #166534;
 }
 
+.roadmap-status--done {
+  background: #2563eb;
+  color: #ffffff;
+}
+
 .card,
 .evidence-card,
 .roadmap article,

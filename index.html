@@ -16,6 +16,7 @@
         <a href="#react-labs">React 구현 사례</a>
         <a href="#backend">백엔드</a>
         <a href="#verification">검증</a>
+        <a href="#tokens">디자인 토큰</a>
         <a href="#deploy">배포</a>
         <a href="#wod-planner">WOD Planner</a>
         <a href="#ai-workflow">AI 워크플로우</a>
@@ -286,6 +287,71 @@
               <code>seed coverage</code>
             </article>
           </div>
+        </section>
+      </div>
+
+      <div class="pdf-page">
+        <section class="section" id="tokens">
+          <div class="section-heading">
+            <p class="eyebrow">확장 계획 1 · 완료</p>
+            <h2>같은 이름이 저장소마다 다른 값을 가리키고 있었습니다</h2>
+            <p>
+              세 보일러플레이트가 "공통 디자인 시스템"을 표방했지만, 실제로는 세 벌의 팔레트가
+              각자 표류하고 있었습니다. 값을 한 번 맞추는 것으로는 다시 갈라집니다. 그래서
+              단일 소스에서 생성하고, 어긋나면 실패하는 검사를 붙였습니다.
+            </p>
+          </div>
+          <div class="react-labs-grid react-labs-grid--four">
+            <article class="react-lab-card">
+              <span class="react-lab-status">발견</span>
+              <h3>조용히 갈라진 세 개의 색</h3>
+              <p><code>--color-line</code>, <code>--color-success</code>, <code>--color-surface</code>가 react와 next에서 다른 값이었습니다.</p>
+              <ul>
+                <li>차이가 미세해서 아무도 눈치채지 못한 채 벌어졌습니다</li>
+                <li>next에는 react에 없는 토큰 5개가 더 있었습니다</li>
+                <li>vue는 <code>--ds-</code> 계층을 따로 두고 다크 테마까지 갖고 있었습니다</li>
+              </ul>
+              <code>TOKEN_INVENTORY.md</code>
+            </article>
+            <article class="react-lab-card">
+              <span class="react-lab-status">발견</span>
+              <h3>이름은 같고 크기는 다른 스케일</h3>
+              <p>더 위험한 쪽이었습니다. <code>--radius-md</code>는 8px, <code>--ds-radius-md</code>는 6px입니다.</p>
+              <ul>
+                <li>vue의 반경 스케일이 정확히 한 칸씩 밀려 있었습니다</li>
+                <li>px와 rem이라 문자열 비교로는 "서로 다른 토큰"으로 보입니다</li>
+                <li>이름만 보고 합쳤다면 한쪽 모서리가 조용히 바뀌었을 것입니다</li>
+              </ul>
+              <code>merge 하지 않음</code>
+            </article>
+            <article class="react-lab-card">
+              <span class="react-lab-status">판단</span>
+              <h3>값이 같다고 묶지 않았습니다</h3>
+              <p><code>ds.radius.sm</code>과 <code>ds.spacing.1</code>은 둘 다 <code>0.25rem</code>이지만 서로 다른 결정입니다.</p>
+              <ul>
+                <li>묶었다면 간격을 바꿀 때 모서리가 따라 움직입니다</li>
+                <li>역할이 같은 색 4개만 원시값으로 공유했습니다</li>
+                <li>나머지 우연의 일치는 이유와 함께 리터럴로 남겼습니다</li>
+              </ul>
+              <code>83 tokens</code>
+            </article>
+            <article class="react-lab-card">
+              <span class="react-lab-status">게이트</span>
+              <h3>생성하지 않고 비교합니다</h3>
+              <p>vue의 기존 파이프라인은 CI에서 생성기를 <em>실행</em>했습니다. 손으로 고친 파일이 덮어써질 뿐 실패하지 않습니다.</p>
+              <ul>
+                <li>이제 렌더링해서 커밋된 파일과 비교하고, 다르면 파일·줄·양쪽 값을 출력합니다</li>
+                <li>한 글자를 고쳐 실패하는 것을 확인한 뒤 되돌려 통과시켰습니다</li>
+                <li>세 저장소 모두 <code>check:ci</code>에 포함됩니다</li>
+              </ul>
+              <code>check:tokens</code>
+            </article>
+          </div>
+          <p class="react-lab-note">
+            react는 값이 하나도 바뀌지 않았고(추가 5개, 변경 0), next는 의도한 세 색만 바뀌었으며,
+            vue는 생성물이 이전과 바이트 단위로 동일합니다. 소스를 바꿨는데 화면은 그대로라는 것이
+            이 작업이 회귀 없이 끝났다는 증거입니다.
+          </p>
         </section>
       </div>
 
@@ -752,13 +818,12 @@ src/stores</code></pre>
           <div class="roadmap">
             <article>
               <span>1</span>
-              <span class="roadmap-status">프롬프트 작성 완료 · 착수 전</span>
+              <span class="roadmap-status roadmap-status--done">완료</span>
               <h3>디자인 토큰</h3>
               <p>
-                세 저장소는 이미 각자 토큰을 갖고 있고, 같은 이름을 다른 값으로 정의합니다.
-                <code>--color-line</code>, <code>--color-success</code>, <code>--color-surface</code>가
-                react와 next에서 다르고 vue는 별도 네임스페이스를 씁니다. 값을 한 번 맞추는 대신
-                단일 소스에서 생성하고, 어긋나면 CI가 실패하도록 만듭니다.
+                세 저장소가 각자 토큰을 갖고 있었고 값이 갈라져 있었습니다. 이제 하나의
+                <code>tokens.json</code>에서 생성하며, 생성물을 손으로 고치면 CI가 실패합니다.
+                자세한 내용은 아래 사례를 보세요.
               </p>
             </article>
             <article>
