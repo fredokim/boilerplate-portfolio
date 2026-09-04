@@ -1358,3 +1358,51 @@ pre code {
   .react-labs-grid { grid-template-columns: 1fr; }
   .react-lab-card { min-height: auto; }
 }
+
+/* Deployed sites, linked from the hero. These are the only part of the page a
+   reader can click into and use, so they sit above the fold rather than in an
+   appendix. */
+.live-links {
+  border-top: 1px solid var(--line);
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+}
+
+.live-links-label {
+  color: var(--muted);
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  margin: 0 0 0.5rem;
+  text-transform: uppercase;
+}
+
+.live-links ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  list-style: none;
+  margin: 0 0 1rem;
+  padding: 0;
+}
+
+.live-links li a {
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--blue);
+  display: inline-block;
+  font-size: 0.875rem;
+  padding: 0.35rem 0.85rem;
+  text-decoration: none;
+}
+
+.live-links li a:hover,
+.live-links li a:focus-visible {
+  border-color: var(--blue);
+}
+
+.live-links-note {
+  color: var(--muted);
+  font-size: 0.8125rem;
+  margin: 0;
+}

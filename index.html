@@ -21,6 +21,7 @@
         <a href="#shared-backend">공용 백엔드</a>
         <a href="#three-clients">세 클라이언트</a>
         <a href="#deploy">배포</a>
+        <a href="#deploy-findings">배포가 드러낸 것</a>
         <a href="#wod-planner">WOD Planner</a>
         <a href="#ai-workflow">AI 워크플로우</a>
         <a href="#platform">플랫폼</a>
@@ -45,6 +46,21 @@
               <div><span>유형</span><strong>개인 아키텍처 프로젝트</strong></div>
               <div><span>범위</span><strong>Vue, React, Next.js 보일러플레이트 + NestJS 백엔드</strong></div>
               <div><span>초점</span><strong>타입 안정성, 상태 전략, 계약 검증</strong></div>
+            </div>
+            <div class="live-links" aria-label="배포된 사이트">
+              <p class="live-links-label">배포된 애플리케이션</p>
+              <ul>
+                <li><a href="https://react-boilerplate-f4oo.onrender.com" rel="noopener">React</a></li>
+                <li><a href="https://vue-boilerplate-ac0b.onrender.com" rel="noopener">Vue</a></li>
+                <li><a href="https://next-boilerplate-begy.onrender.com" rel="noopener">Next.js</a></li>
+              </ul>
+              <p class="live-links-label">컴포넌트 카탈로그</p>
+              <ul>
+                <li><a href="https://fredokim.github.io/boilplate-react/" rel="noopener">React Storybook</a></li>
+                <li><a href="https://fredokim.github.io/boilplate-vue/" rel="noopener">Vue Storybook</a></li>
+                <li><a href="https://fredokim.github.io/boilplate-next/" rel="noopener">Next.js Storybook</a></li>
+              </ul>
+              <p class="live-links-note">무료 인스턴스라 15분간 요청이 없으면 내려갑니다. 첫 접속은 1분 정도 걸릴 수 있습니다.</p>
             </div>
           </div>
           <div class="hero-visual" aria-label="프로젝트 개요 패널">
@@ -566,19 +582,21 @@
             <p>
               리프레시 토큰은 <code>sameSite: lax</code> 쿠키입니다. 프론트와 API를 서로 다른 호스트에 두면 브라우저가
               이 쿠키를 보내지 않습니다. 로그인은 성공하고, 액세스 토큰이 만료되는 순간 세션이 이유 없이 끝납니다.
-              WebSocket 두 개도 리라이트 계층 뒤에서 같은 지점이 깨집니다. 그래서 배포 단위를 하나로 정했습니다.
+              WebSocket 두 개도 같은 지점에서 깨집니다. 세 프론트가 한 백엔드를 공유하므로 어느 하나에 서버를 묶을 수
+              없었고, <strong>각 프론트가 <code>/api</code>를 백엔드로 프록시</strong>하는 형태로 정리했습니다.
+              브라우저는 언제나 하나의 오리진만 봅니다.
             </p>
           </div>
           <div class="evidence-grid">
             <article class="evidence-card">
-              <h3>단일 오리진</h3>
-              <p>서버가 빌드된 프론트엔드를 함께 서빙합니다. 개발 환경의 Vite 프록시가 하던 역할을 프로덕션에서도 유지합니다.</p>
-              <code>CLIENT_DIR</code>
+              <h3>서비스 네 개</h3>
+              <p>백엔드 하나와 프론트 셋. 각 저장소의 <code>render.yaml</code>이 자기 서비스를 기술하므로, 설정이 대시보드에서 조용히 바뀌지 않습니다.</p>
+              <code>render.yaml</code>
             </article>
             <article class="evidence-card">
-              <h3>경계 유지</h3>
-              <p>딥링크는 SPA로, 없는 API 경로는 JSON 404로 응답합니다. 라우트 누락이 HTML 200으로 둔갑하지 않습니다.</p>
-              <code>SPA fallback</code>
+              <h3>프레임워크별 프록시</h3>
+              <p>React와 Vue는 Caddy 리버스 프록시, Next는 라우트 핸들러입니다. WebSocket만은 Next의 핸들러가 중계하지 못해 rewrites로 넘깁니다.</p>
+              <code>BACKEND_ORIGIN / BACKEND_URL</code>
             </article>
             <article class="evidence-card">
               <h3>부팅 시 거부</h3>
@@ -586,9 +604,60 @@
               <code>COOKIE_SECURE</code>
             </article>
             <article class="evidence-card">
-              <h3>이미지 한 개</h3>
-              <p>프론트 빌드와 서버 빌드를 하나의 multi-stage 이미지로 굽고, CI가 컨테이너를 띄워 검증합니다.</p>
-              <code>Dockerfile</code>
+              <h3>순서가 있는 배포</h3>
+              <p>프론트는 백엔드 URL이, 백엔드는 프론트 오리진이 필요합니다. <code>CORS_ORIGINS</code>는 CORS만이 아니라 인증된 소켓의 교차 사이트 연결을 막는 유일한 장치입니다.</p>
+              <code>4401</code>
+            </article>
+          </div>
+        </section>
+      </div>
+
+      <div class="pdf-page">
+        <section class="section" id="deploy-findings">
+          <div class="section-heading">
+            <p class="eyebrow">배포가 드러낸 것</p>
+            <h2>초록 게이트가 증명하지 못한 두 가지</h2>
+            <p>
+              모든 게이트가 통과한 상태에서 배포했고, 두 개가 바로 걸렸습니다. 둘 다 <strong>배포하기 전에는
+              드러날 수 없는</strong> 종류였습니다. 하나는 CI가 프로덕션보다 느슨한 조건으로 검사하고 있었고,
+              다른 하나는 실패를 만들지 않고 15분 뒤에야 결과가 나타나는 것이었습니다.
+            </p>
+          </div>
+          <div class="react-labs-grid">
+            <article class="react-lab-card">
+              <span class="react-lab-status">발견</span>
+              <h3>컨테이너가 시작조차 못 했습니다</h3>
+              <p>배포 로그에 한 줄만 남았습니다. <code>exec /usr/bin/caddy: operation not permitted</code></p>
+              <ul>
+                <li>Caddy 베이스 이미지는 80번 포트를 열려고 바이너리에 파일 capability를 겁니다</li>
+                <li>플랫폼은 컨테이너를 <code>no-new-privileges</code>로 띄웁니다. 그 상태에서 capability가 붙은 파일의 <code>execve()</code>는 EPERM입니다</li>
+                <li><strong>CI는 이 플래그 없이</strong> 컨테이너를 띄우고 있었습니다 — 프로덕션보다 느슨한 조건의 스모크 테스트는 스모크 테스트가 아닙니다</li>
+                <li>바이너리를 복사해 capability를 떨어뜨렸고, CI도 같은 플래그를 넘기게 했습니다</li>
+              </ul>
+              <code>no-new-privileges</code>
+            </article>
+            <article class="react-lab-card">
+              <span class="react-lab-status">발견</span>
+              <h3>리프레시 쿠키가 사라졌습니다</h3>
+              <p>Next를 거친 로그인 응답에는 <code>rb_access</code>만 있고, 백엔드를 직접 부르면 <code>rb_refresh</code>가 있었습니다.</p>
+              <ul>
+                <li>프록시는 <code>getSetCookie()</code>로 제대로 붙입니다. 그 뒤 라우트가 <code>cookies.set()</code>을 부르며 헤더 전체를 다시 만듭니다</li>
+                <li>기존 헤더를 쉼표로 이어붙인 한 덩어리로 읽는 그 손상이, <strong>한 층 위에서</strong> 일어나고 있었습니다</li>
+                <li>아무것도 실패하지 않습니다. 로그인은 200이고, 15분 뒤 조용히 로그아웃됩니다</li>
+                <li>리프레시 경로에서는 더 나쁩니다 — 회전된 토큰을 버리면 옛 토큰 재사용이 replay로 간주되어 패밀리가 폐기됩니다</li>
+              </ul>
+              <code>rb_refresh</code>
+            </article>
+            <article class="react-lab-card">
+              <span class="react-lab-status">게이트</span>
+              <h3>둘 다 게이트를 고쳐서 닫았습니다</h3>
+              <p>고친 코드가 통과하는 것으로는 부족합니다. 게이트가 <em>옛 코드를 잡는지</em>를 확인했습니다.</p>
+              <ul>
+                <li>쿠키 동작에 대한 테스트가 하나도 없었습니다. 네 개를 새로 썼고, <strong>옛 구현에서 세 개가 실패</strong>합니다</li>
+                <li>도커 스모크 테스트는 이제 프로덕션과 같은 보안 플래그로 컨테이너를 띄웁니다</li>
+                <li>이 세션에서 닫은 다른 게이트들과 같은 방식입니다 — 일부러 깨뜨려 실패를 본 뒤 되돌립니다</li>
+              </ul>
+              <code>회귀 테스트</code>
             </article>
           </div>
         </section>
@@ -1047,6 +1116,17 @@ src/stores</code></pre>
                 demo session은 실제 서버 인증으로 교체되었습니다. Argon2id 해시, 회전 리프레시 토큰,
                 권한 guard가 동작합니다. 남은 범위는 외부 IdP 연동과 MFA이며, 백엔드 구현 시
                 의도적으로 제외한 부분입니다.
+              </p>
+            </article>
+            <article>
+              <span>4</span>
+              <span class="roadmap-status roadmap-status--done">완료</span>
+              <h3>배포</h3>
+              <p>
+                네 개의 서비스가 프로덕션에서 돌고 있습니다. 세 프론트 모두 실제 브라우저에서 로그인하고,
+                채팅 소켓이 붙고, 밖에서 발행한 토폴로지 이벤트가 화면의 카운터를 바꾸는 것까지 확인했습니다.
+                프록시 뒤에서만 드러나는 것들 — TLS 종료, <code>TRUST_PROXY</code>, <code>Secure</code> 쿠키
+                발급 — 이 처음으로 검증되었습니다. 부하 측정은 여전히 없습니다.
               </p>
             </article>
           </div>
