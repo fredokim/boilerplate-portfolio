@@ -192,10 +192,13 @@ Trade-offs:
 
 Next improvements:
 
+This list was written before the backend existed, and surveying the repositories to plan the next two items showed that two of the entries described a starting point that no longer holds. Restated against what is actually there:
+
+- **A single design-token source.** Not a missing feature — three sets already exist and disagree. `--color-line`, `--color-success`, and `--color-surface` hold different values in the React and Next repositories, Next carries five tokens and a shadow file React does not, and Vue uses a separate `--ds-` namespace alongside a runtime `applyTheme` that writes over it. The work is a structure where the values cannot diverge, plus a CI check, not a one-time reconciliation.
+- **Generators that follow the repository's own conventions.** Six generators exist. The feature generator produces something the router cannot see: the registry globs `@features/**/routes/*.route.tsx` and three features are registered that way, but the generator never creates that directory. It also leaves `api/` and `hooks/` empty and writes neither a story nor a test. The check that should catch this asserts four generator files exist, never runs one, and does not include the feature generator.
+- **Auth beyond first-party credentials.** Password auth, rotating sessions, and permission guards now exist server-side. External identity providers and MFA were deliberately excluded and remain unimplemented. Feature flags do not exist in any repository.
+- **More accessibility coverage.** One a11y test exists (`Button.a11y.test.tsx`). End-to-end tests now run in CI, which they did not when this list was written, but there are four specs in a single file.
 - Split templates into lightweight, standard, and strict modes.
-- Add token generation from a single design-token source.
-- Expand auth, permission, feature flag, and observability examples.
-- Add more E2E and accessibility examples for complex table/form flows.
 
 ## Related Files
 

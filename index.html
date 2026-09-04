@@ -750,9 +750,37 @@ src/stores</code></pre>
             <h2>확장 계획</h2>
           </div>
           <div class="roadmap">
-            <article><span>1</span><h3>디자인 토큰</h3><p>Figma token을 CSS variables와 프레임워크별 preset으로 연결합니다.</p></article>
-            <article><span>2</span><h3>생성기</h3><p>feature, DTO, story, test, route 파일을 일관된 규칙으로 생성합니다.</p></article>
-            <article><span>3</span><h3>프로덕션 인증</h3><p>server boundary를 유지하면서 demo session을 실제 인증 provider로 교체합니다.</p></article>
+            <article>
+              <span>1</span>
+              <span class="roadmap-status">프롬프트 작성 완료 · 착수 전</span>
+              <h3>디자인 토큰</h3>
+              <p>
+                세 저장소는 이미 각자 토큰을 갖고 있고, 같은 이름을 다른 값으로 정의합니다.
+                <code>--color-line</code>, <code>--color-success</code>, <code>--color-surface</code>가
+                react와 next에서 다르고 vue는 별도 네임스페이스를 씁니다. 값을 한 번 맞추는 대신
+                단일 소스에서 생성하고, 어긋나면 CI가 실패하도록 만듭니다.
+              </p>
+            </article>
+            <article>
+              <span>2</span>
+              <span class="roadmap-status">프롬프트 작성 완료 · 착수 전</span>
+              <h3>생성기</h3>
+              <p>
+                생성기는 이미 여섯 개 있습니다. 문제는 만들어낸 기능을 라우터가 인식하지 못하고,
+                story도 test도 없이 빈 디렉터리를 남긴다는 것입니다. 저장소의 관례대로 생성하게 하고,
+                게이트가 생성물을 실제로 실행해 검증하도록 바꿉니다.
+              </p>
+            </article>
+            <article>
+              <span>3</span>
+              <span class="roadmap-status roadmap-status--partial">일부 완료</span>
+              <h3>프로덕션 인증</h3>
+              <p>
+                demo session은 실제 서버 인증으로 교체되었습니다. Argon2id 해시, 회전 리프레시 토큰,
+                권한 guard가 동작합니다. 남은 범위는 외부 IdP 연동과 MFA이며, 백엔드 구현 시
+                의도적으로 제외한 부분입니다.
+              </p>
+            </article>
           </div>
         </section>
       </div>
