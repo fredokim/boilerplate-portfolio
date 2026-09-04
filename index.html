@@ -18,6 +18,7 @@
         <a href="#verification">검증</a>
         <a href="#tokens">디자인 토큰</a>
         <a href="#generators">생성기</a>
+        <a href="#shared-backend">공용 백엔드</a>
         <a href="#deploy">배포</a>
         <a href="#wod-planner">WOD Planner</a>
         <a href="#ai-workflow">AI 워크플로우</a>
@@ -182,9 +183,9 @@
               방향이어야 계약이 실제로 지켜지는지 확인할 수 있기 때문입니다.
             </p>
             <p>
-              <strong>백엔드는 React 저장소에만 있습니다.</strong> Vue와 Next.js에도 같은 세 예제(대시보드 빌더,
-              토폴로지, 라이브 스트리밍·채팅)가 이식되어 있지만, 실시간 트랜스포트는 여전히 목입니다. 세 프론트가
-              하나의 서버를 바라보게 하려면 서버를 별도 저장소로 분리해야 하고, 그것은 아직 하지 않았습니다.
+              <strong>백엔드는 이제 별도 저장소이고 React와 Vue가 함께 씁니다.</strong> 프론트마다 서버를 두는 대신
+              하나의 백엔드에 여러 프레임워크를 붙이는 구조입니다. Next.js는 아직 목 위에서 돌고 있으며,
+              연동 프롬프트만 작성해 두었습니다.
             </p>
           </div>
           <div class="react-labs-grid react-labs-grid--four">
@@ -422,6 +423,71 @@
             문서를 쓰다 두 저장소의 <code>generate.ts</code>에 옛 인라인 분기가 남아 있는 것을 발견했습니다.
             README가 안내하는 <code>generate -- feature</code>가 고장난 옛 경로를 쓰고 있었던 셈입니다.
             위임하도록 고치고, 게이트가 진입점의 위임 여부까지 확인하게 했습니다.
+          </p>
+        </section>
+      </div>
+
+      <div class="pdf-page">
+        <section class="section" id="shared-backend">
+          <div class="section-heading">
+            <p class="eyebrow">공용 백엔드</p>
+            <h2>쿠키 속성 하나가 저장소 구조까지 정했습니다</h2>
+            <p>
+              백엔드를 프론트 저장소 밖으로 꺼내 <code>boilplate-server</code>로 분리하고, React와 Vue가
+              같은 서버를 바라보게 했습니다. 이력을 보존한 채 옮겼고, 옮기는 과정에서 배포 형태와
+              계약 검증 방식이 함께 바뀌었습니다.
+            </p>
+          </div>
+          <div class="react-labs-grid react-labs-grid--four">
+            <article class="react-lab-card">
+              <span class="react-lab-status">제약</span>
+              <h3>단일 오리진을 프록시로 지킵니다</h3>
+              <p>리프레시 토큰이 <code>sameSite: lax</code>라, 프론트가 다른 오리진에서 부르면 브라우저가 쿠키를 보내지 않습니다.</p>
+              <ul>
+                <li>로그인은 되고 액세스 토큰 만료 시점에 세션이 조용히 끝납니다</li>
+                <li>이미지 하나에 묶는 방식은 프론트가 셋이 되면서 쓸 수 없게 됐습니다</li>
+                <li>각 프론트가 <code>/api</code>를 프록시해 브라우저 기준 단일 오리진을 유지합니다</li>
+              </ul>
+              <code>proxy</code>
+            </article>
+            <article class="react-lab-card">
+              <span class="react-lab-status">발견</span>
+              <h3>Vue 앱은 부팅조차 하지 않고 있었습니다</h3>
+              <p>연동하려고 화면을 열었더니 백지였습니다. 라우터가 모듈 이름으로 만든 그룹과 자식 라우트의 이름이 충돌했습니다.</p>
+              <ul>
+                <li>모든 게이트가 초록이었습니다 — 단위 테스트는 라우터를 만들지 않습니다</li>
+                <li>Playwright가 의존성에 있는데 설정도 테스트도 없었습니다</li>
+                <li>모듈 라우트 7개를 전부 방문하는 e2e를 붙였습니다. 충돌은 그 모듈에서만 드러납니다</li>
+              </ul>
+              <code>18 e2e specs</code>
+            </article>
+            <article class="react-lab-card">
+              <span class="react-lab-status">발견</span>
+              <h3>봉투가 서로 달랐습니다</h3>
+              <p>계약 불일치를 넷으로 정리했는데, 정작 가장 큰 것은 응답 봉투 자체였습니다.</p>
+              <ul>
+                <li>Vue는 <code>{ status: "SUCCESS" }</code>, 서버는 <code>{ success: true }</code></li>
+                <li><code>status</code> 필드가 없으니 <strong>어떤 응답도 검증을 통과할 수 없습니다</strong></li>
+                <li>세션 응답은 토큰을 주지 않고, 리프레시 토큰은 응답 본문에 존재한 적이 없습니다</li>
+              </ul>
+              <code>5 mismatches</code>
+            </article>
+            <article class="react-lab-card">
+              <span class="react-lab-status">게이트</span>
+              <h3>계약 테스트가 첫 실행에서 버그를 잡았습니다</h3>
+              <p>대시보드 호출 세 개가 <code>/api</code> 접두사 없이 쓰여 있었습니다.</p>
+              <ul>
+                <li>프록시가 전달하지 않아 SPA fallback에 걸립니다 — 200이지만 <code>text/html</code></li>
+                <li>성공처럼 보이고 나중에 DTO 검증에서 엉뚱한 곳을 가리킵니다</li>
+                <li>호출 URL을 소스에서 추출하되 <code>basePath</code> 상수를 해석합니다</li>
+              </ul>
+              <code>check:contract</code>
+            </article>
+          </div>
+          <p class="react-lab-note">
+            401이 동시에 여러 건 나면 갱신은 <strong>정확히 한 번</strong>만 일어나야 합니다. 서버가 리프레시 토큰을
+            회전시키기 때문에, 병렬 갱신은 이미 쓴 토큰을 재사용 공격으로 읽히게 만들어 세션 전체를 폐기시킵니다.
+            브라우저에서 401 다섯 건을 만들어 갱신 요청이 한 번인 것을 네트워크 로그로 확인했습니다.
           </p>
         </section>
       </div>
