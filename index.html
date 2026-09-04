@@ -17,6 +17,7 @@
         <a href="#backend">백엔드</a>
         <a href="#verification">검증</a>
         <a href="#tokens">디자인 토큰</a>
+        <a href="#generators">생성기</a>
         <a href="#deploy">배포</a>
         <a href="#wod-planner">WOD Planner</a>
         <a href="#ai-workflow">AI 워크플로우</a>
@@ -179,6 +180,11 @@
               React 보일러플레이트는 MSW mock 위에서 동작하고 있었습니다. 그 mock이 서술하던 계약을 NestJS + Prisma +
               PostgreSQL로 구현하되, 프론트엔드 코드는 바꾸지 않는 것을 조건으로 삼았습니다. 서버가 프론트에 맞추는
               방향이어야 계약이 실제로 지켜지는지 확인할 수 있기 때문입니다.
+            </p>
+            <p>
+              <strong>백엔드는 React 저장소에만 있습니다.</strong> Vue와 Next.js에도 같은 세 예제(대시보드 빌더,
+              토폴로지, 라이브 스트리밍·채팅)가 이식되어 있지만, 실시간 트랜스포트는 여전히 목입니다. 세 프론트가
+              하나의 서버를 바라보게 하려면 서버를 별도 저장소로 분리해야 하고, 그것은 아직 하지 않았습니다.
             </p>
           </div>
           <div class="react-labs-grid react-labs-grid--four">
@@ -351,6 +357,71 @@
             react는 값이 하나도 바뀌지 않았고(추가 5개, 변경 0), next는 의도한 세 색만 바뀌었으며,
             vue는 생성물이 이전과 바이트 단위로 동일합니다. 소스를 바꿨는데 화면은 그대로라는 것이
             이 작업이 회귀 없이 끝났다는 증거입니다.
+          </p>
+        </section>
+      </div>
+
+      <div class="pdf-page">
+        <section class="section" id="generators">
+          <div class="section-heading">
+            <p class="eyebrow">확장 계획 2 · 완료</p>
+            <h2>생성기가 만든 화면을 라우터가 볼 수 없었습니다</h2>
+            <p>
+              세 저장소 모두 생성기를 갖고 있었습니다. 문제는 생성물이 저장소 자신의 관례를
+              어긴다는 것, 그리고 그것을 검사해야 할 게이트가 <strong>생성기 파일이 존재하는지만</strong>
+              보고 있었다는 것입니다. 한 번도 실행해보지 않는 검사였습니다.
+            </p>
+          </div>
+          <div class="react-labs-grid react-labs-grid--four">
+            <article class="react-lab-card">
+              <span class="react-lab-status">발견</span>
+              <h3>열 수 없는 기능</h3>
+              <p>react의 라우터는 <code>routes/*.route.tsx</code>를 수집하는데, 생성기는 그 디렉터리를 만들지도 않았습니다.</p>
+              <ul>
+                <li>next는 더 심했습니다 — 라우팅이 파일 시스템인데 <code>page.tsx</code>를 만들지 않았습니다</li>
+                <li>빈 디렉터리를 남겨 따르지 않은 관례를 광고했습니다</li>
+                <li>story도 test도 만들지 않아, 쓸수록 관례에서 멀어졌습니다</li>
+              </ul>
+              <code>routes / page.tsx</code>
+            </article>
+            <article class="react-lab-card">
+              <span class="react-lab-status">발견</span>
+              <h3>저장소마다 관례가 달랐습니다</h3>
+              <p>react의 계약을 그대로 옮기면 틀립니다. 여섯·일곱·여덟 기능을 각각 조사해 따로 문서화했습니다.</p>
+              <ul>
+                <li>라우트 파일: react 6개 중 3개, vue <strong>7개 전부</strong>, next는 아예 다른 트리</li>
+                <li>story: react 6개 전부, vue는 <strong>7개 중 1개</strong></li>
+                <li>vue의 생성기는 이미 앞서 있었고, 없던 건 검증뿐이었습니다</li>
+              </ul>
+              <code>FEATURE_CONTRACT.md ×3</code>
+            </article>
+            <article class="react-lab-card">
+              <span class="react-lab-status">판단</span>
+              <h3>스캐폴딩이 CI를 빨갛게 만들면 안 됩니다</h3>
+              <p>생성된 api 모듈이 없는 엔드포인트를 호출하니 계약 테스트가 즉시 실패했습니다.</p>
+              <ul>
+                <li>맞는 실패지만, 코드 한 줄 쓰기 전에 겪으면 검사를 무시하게 됩니다</li>
+                <li><code>--api</code> 플래그로 옮겨 명시적 선택으로 만들었습니다</li>
+                <li>계약 테스트가 없는 vue는 기본으로 두고, 그 차이를 문서에 적었습니다</li>
+              </ul>
+              <code>--api</code>
+            </article>
+            <article class="react-lab-card">
+              <span class="react-lab-status">게이트</span>
+              <h3>파일을 세지 않고 실행합니다</h3>
+              <p>고치기 전에 게이트를 먼저 만들어 <strong>실패시켰습니다.</strong> 누락 5개와 빈 디렉터리 2개를 지목했습니다.</p>
+              <ul>
+                <li>덮어쓰기 거부와 경로 탈출 거부까지 검사합니다</li>
+                <li>vue는 라우터의 글롭 패턴을 읽어와 생성 경로와 대조합니다</li>
+                <li>next는 생성된 뷰가 서버 컴포넌트인지 검사합니다</li>
+              </ul>
+              <code>check:generators</code>
+            </article>
+          </div>
+          <p class="react-lab-note">
+            문서를 쓰다 두 저장소의 <code>generate.ts</code>에 옛 인라인 분기가 남아 있는 것을 발견했습니다.
+            README가 안내하는 <code>generate -- feature</code>가 고장난 옛 경로를 쓰고 있었던 셈입니다.
+            위임하도록 고치고, 게이트가 진입점의 위임 여부까지 확인하게 했습니다.
           </p>
         </section>
       </div>
@@ -828,12 +899,12 @@ src/stores</code></pre>
             </article>
             <article>
               <span>2</span>
-              <span class="roadmap-status">프롬프트 작성 완료 · 착수 전</span>
+              <span class="roadmap-status roadmap-status--done">완료</span>
               <h3>생성기</h3>
               <p>
-                생성기는 이미 여섯 개 있습니다. 문제는 만들어낸 기능을 라우터가 인식하지 못하고,
-                story도 test도 없이 빈 디렉터리를 남긴다는 것입니다. 저장소의 관례대로 생성하게 하고,
-                게이트가 생성물을 실제로 실행해 검증하도록 바꿉니다.
+                생성기가 만들어낸 기능을 라우터가 인식하지 못했습니다. 이제 세 저장소 모두
+                각자의 관례대로 생성하고, 게이트가 생성기를 <em>실행해</em> 결과를 검사합니다.
+                자세한 내용은 아래 사례를 보세요.
               </p>
             </article>
             <article>
