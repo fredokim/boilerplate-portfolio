@@ -27,6 +27,7 @@
         <a href="#a11y">접근성</a>
         <a href="#connection-vocabulary">실시간 UX</a>
         <a href="#failure-vocabulary">실패 상태</a>
+        <a href="#unreachable-states">도달할 수 없던 상태</a>
         <a href="#wod-planner">WOD Planner</a>
         <a href="#ai-workflow">AI 워크플로우</a>
         <a href="#platform">플랫폼</a>
@@ -926,6 +927,73 @@
       </div>
 
       <div class="pdf-page">
+        <section class="section" id="unreachable-states">
+          <div class="section-heading">
+            <p class="eyebrow">배포본에서 확인하기</p>
+            <h2>이름은 있는데 화면에 도달할 수 없던 상태</h2>
+            <p>
+              어휘를 정의하고 테스트를 붙이고 배포까지 했습니다. 그런데 실제 배포본을 열어 1분간 방치해보니
+              소켓은 설계대로 반납되었는데 화면은 <strong>“Disconnected / Not receiving updates.”</strong>
+              라고 말했습니다. 고장이 아닌 것을 고장이라고요. 정의해둔 <code>suspended</code>는 코드 어디에도
+              살아 있었지만, <strong>화면까지 오는 경로가 없었습니다.</strong>
+            </p>
+          </div>
+          <div class="react-labs-grid react-labs-grid--four">
+            <article class="react-lab-card">
+              <span class="react-lab-status">발견</span>
+              <h3>화면이 소켓을 보고 있었습니다</h3>
+              <p>UI가 구독하던 대상은 컨트롤러가 아니라 transport였습니다. transport는 자기 소켓이 무엇을 했는지만 압니다.</p>
+              <ul>
+                <li><code>suspended</code>는 <strong>컨트롤러가 내리는 결정</strong>입니다. 소켓은 그냥 닫혔을 뿐입니다</li>
+                <li><code>reconnecting</code>은 끊김과 다음 시도 <strong>사이에만</strong> 존재합니다. transport는 끊김을 <code>disconnected</code>로, 재시도를 <code>connecting</code>으로 보고할 뿐입니다</li>
+                <li>둘 다 어휘에 정의돼 있었고, 둘 다 한 번도 표시된 적이 없었습니다</li>
+              </ul>
+              <code>subscribeConnection</code>
+            </article>
+            <article class="react-lab-card">
+              <span class="react-lab-status">게이트</span>
+              <h3>테스트가 버그를 정답으로 고정하고 있었습니다</h3>
+              <p>초록이던 단언 하나가 화면이 잘못 보여주던 그 값을 그대로 붙잡고 있었습니다.</p>
+              <ul>
+                <li><code>expect(transport.getConnectionState()).toBe('disconnected')</code> — 정지 중에</li>
+                <li>컨트롤러만 검사하는 테스트는 통과했습니다. <strong>화면이 읽는 경로와 다른 것을 재고 있었습니다</strong></li>
+                <li>새 테스트는 UI가 구독하는 바로 그 자리를 구독합니다. 고치기 전에 3건이 실패하는 것을 확인했습니다</li>
+              </ul>
+              <code>3 failed | 7 passed</code>
+            </article>
+            <article class="react-lab-card">
+              <span class="react-lab-status">측정</span>
+              <h3>제가 틀린 조건에서 재고 있었습니다</h3>
+              <p>같은 확인 중에 “위젯이 영원히 로딩에 멈춘다”는 결함을 발견했다고 보고했다가, 취소했습니다.</p>
+              <ul>
+                <li>제가 띄운 탭이 <code>visibilityState: "hidden"</code>이었습니다</li>
+                <li>React Query는 숨은 탭에서 <strong>재시도를 일부러 멈춰 세웁니다</strong>(<code>canContinue()</code>가 포커스를 요구)</li>
+                <li>탭을 앞으로 가져오자 곧바로 “Sign in required”가 떴습니다. <strong>결함이 아니라 제 측정 조건이 틀린 것</strong>이었습니다</li>
+              </ul>
+              <code>fetchStatus: "paused"</code>
+            </article>
+            <article class="react-lab-card">
+              <span class="react-lab-status">수정</span>
+              <h3>상태의 출처를 한 곳으로</h3>
+              <p>transport는 그대로 뒀습니다. 소켓이 닫혔다는 사실만 보고하고, <strong>“왜”는 컨트롤러가 말합니다.</strong></p>
+              <ul>
+                <li>모든 상태 변경이 <code>setConnectionState()</code> 한 곳을 통과합니다</li>
+                <li><code>stop(reason)</code>은 transport 구독을 끊은 <em>뒤</em> 한 번만 설정합니다 — <code>disconnected</code>가 먼저 스쳐 지나가지 않도록</li>
+                <li>세 저장소 모두 같은 모양으로. 저장소당 6개 파일</li>
+              </ul>
+              <code>Live → Paused → Live</code>
+            </article>
+          </div>
+          <p class="react-lab-note">
+            고친 뒤 배포본에서 다시 확인했습니다. 탭을 1분 숨기면 <code>Connection: Paused</code>와
+            “Released while the page was idle. It reconnects when you interact.”가 뜨고, 탭으로 돌아오면
+            다시 <code>Live</code>입니다. <strong>이 프로젝트에서 반복해서 나온 형태가 여기서도 나왔습니다</strong> —
+            테스트도 있고 어휘도 있고 배포도 됐는데, 아무도 그 화면을 실제로 열어본 적이 없었습니다.
+          </p>
+        </section>
+      </div>
+
+      <div class="pdf-page">
         <section class="section">
           <div class="section-heading">
             <p class="eyebrow">구현</p>
@@ -1411,6 +1479,10 @@ src/stores</code></pre>
                 <code>suspended</code>가 그 둘을 갈랐습니다. 실패한 요청도 같은 문제를 갖고 있었습니다 —
                 모든 오류가 같은 네 단어였습니다. 이제 아홉 가지 상황이 각자의 문구와
                 <em>재시도가 통할 수 있는지</em>를 갖습니다. 세 저장소가 같은 말을 합니다.
+                그리고 배포본을 실제로 열어보고 나서야, 그렇게 정의한 <code>suspended</code>와
+                <code>reconnecting</code>이 <strong>화면까지 오는 경로가 없었다</strong>는 것을 알았습니다.
+                상태의 출처를 컨트롤러 한 곳으로 모아 고쳤고, <code>Live → Paused → Live</code>를
+                프로덕션에서 확인했습니다.
               </p>
             </article>
             <article>
