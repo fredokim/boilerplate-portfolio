@@ -22,6 +22,10 @@
         <a href="#three-clients">세 클라이언트</a>
         <a href="#deploy">배포</a>
         <a href="#deploy-findings">배포가 드러낸 것</a>
+        <a href="#unrun-gates">켜지지 않았던 게이트</a>
+        <a href="#measurement">측정</a>
+        <a href="#a11y">접근성</a>
+        <a href="#connection-vocabulary">실시간 UX</a>
         <a href="#wod-planner">WOD Planner</a>
         <a href="#ai-workflow">AI 워크플로우</a>
         <a href="#platform">플랫폼</a>
@@ -664,6 +668,208 @@
       </div>
 
       <div class="pdf-page">
+        <section class="section" id="unrun-gates">
+          <div class="section-heading">
+            <p class="eyebrow">켜지지 않았던 게이트</p>
+            <h2>이 문서가 주장하던 검사 중 넷은 실행된 적이 없었습니다</h2>
+            <p>
+              토큰 게이트와 생성기 게이트는 이 사례 연구의 1번과 2번 항목이 존재하는 이유입니다. 둘 다
+              <code>check:ci</code>에 들어 있었고, <strong>워크플로가 단계를 개별로 나열하면서 그 셋을 빠뜨렸습니다.</strong>
+              PR에서 한 번도 돌지 않았습니다. 만들고, 로컬에서 확인하고, 연결하지 않은 것 — 이 게이트들이
+              잡으려던 결함과 정확히 같은 종류이며, 이번에는 그것을 만든 쪽이 저질렀습니다.
+            </p>
+          </div>
+          <div class="evidence-grid">
+            <article class="evidence-card">
+              <h3>check:tokens</h3>
+              <p>토큰을 손으로 고치면 실패해야 하는 검사. 세 저장소 모두 CI에 없었습니다.</p>
+              <code>연결함</code>
+            </article>
+            <article class="evidence-card">
+              <h3>check:generators</h3>
+              <p>생성기를 <em>실행해</em> 결과를 검사하는 게이트. 역시 세 저장소 모두 없었습니다.</p>
+              <code>연결함</code>
+            </article>
+            <article class="evidence-card">
+              <h3>check:deps</h3>
+              <p>의존성 검사. 같은 누락.</p>
+              <code>연결함</code>
+            </article>
+            <article class="evidence-card">
+              <h3>e2e (next)</h3>
+              <p>설정에 <code>channel: msedge</code>가 박혀 있어 리눅스 러너에서는 <strong>애초에 실행될 수 없었습니다.</strong></p>
+              <code>연결함</code>
+            </article>
+          </div>
+          <p class="react-lab-note">
+            켜자마자 첫 번째가 걸렸습니다. next의 e2e가 <em>이 홈 페이지의 어떤 버전에도 없던</em> 제목을
+            찾고 있었습니다. 그 테스트가 쓰인 페이지가 다른 것으로 대체되고, 그것이 또 대체되는 동안
+            아무것도 실패하지 않았습니다.
+          </p>
+        </section>
+      </div>
+
+      <div class="pdf-page">
+        <section class="section" id="measurement">
+          <div class="section-heading">
+            <p class="eyebrow">측정</p>
+            <h2>실패할 수 없는 측정은 측정이 아닙니다</h2>
+            <p>
+              커버리지와 Lighthouse는 Vue에만 있었고, <strong>둘 다 실패할 수 없었습니다.</strong> 커버리지는
+              임계값이 없어 숫자만 찍고 통과했고, Lighthouse는 모든 단언이 <code>warn</code>이었습니다.
+              같은 계약을 세 방식으로 만족시킨다는 주장을 하면서, 정작 측정은 비교 가능하지도 강제되지도
+              않았습니다.
+            </p>
+          </div>
+          <div class="react-labs-grid">
+            <article class="react-lab-card">
+              <span class="react-lab-status">래칫</span>
+              <h3>커버리지 임계값</h3>
+              <p>각 저장소의 측정값을 내림한 값으로 고정했습니다. 목표치가 아니라 “뒤로 가지 마라”입니다.</p>
+              <ul>
+                <li>react 74 / 62 / 69 / 79, vue 62 / 52 / 57 / 65, next 71 / 60 / 68 / 76</li>
+                <li>제외 목록을 Vue에서 복사해 <strong>세 수치가 같은 뜻을 갖게</strong> 했습니다</li>
+                <li>아무도 합의하지 않은 숫자를 걸면 불편해지는 순간 지워집니다</li>
+              </ul>
+              <code>96%로 올려 실패 확인</code>
+            </article>
+            <article class="react-lab-card">
+              <span class="react-lab-status">승격</span>
+              <h3>Lighthouse</h3>
+              <p>접근성과 best-practices를 <code>error</code>로 올렸습니다. 측정값 0.94~1.00 대 바닥선 0.9.</p>
+              <ul>
+                <li>performance는 <strong>일부러 warn으로</strong> 남겼습니다 — 공유 러너의 벽시계 시간이고, 흔들리는 게이트는 조사되지 않고 꺼집니다</li>
+                <li>이 프로젝트가 실제로 통제하는 번들 크기는 <code>check:bundle</code>이 결정적으로 검사합니다</li>
+              </ul>
+              <code>error</code>
+            </article>
+            <article class="react-lab-card">
+              <span class="react-lab-status">발견</span>
+              <h3>부팅할 수 없는 빌드를 감사하고 있었습니다</h3>
+              <p>Vue의 Lighthouse 설정은 <code>npm run build</code> 산출물을 감사했습니다. 그건 mock 모드 번들입니다.</p>
+              <ul>
+                <li>그 번들은 <strong>일부러 부팅을 거부합니다</strong> — 서버가 보낸 적 없는 값을 정상인 것처럼 보여줄 것이기 때문입니다</li>
+                <li>창 모드 Chrome은 포커스를 잃으면 아무것도 그리지 않아 점수 대신 <code>NO_FCP</code>를 냅니다</li>
+                <li><code>staticDistDir</code>에는 SPA fallback이 없어 <code>/login</code>이 404였습니다</li>
+              </ul>
+              <code>NO_FCP</code>
+            </article>
+          </div>
+        </section>
+      </div>
+
+      <div class="pdf-page">
+        <section class="section" id="a11y">
+          <div class="section-heading">
+            <p class="eyebrow">접근성</p>
+            <h2>불러온 직후가 아니라, 쓰는 중인 화면을 검사합니다</h2>
+            <p>
+              Lighthouse는 페이지가 로드되는 순간을 보고 그 뒤는 보지 않습니다. 여기서 볼 가치가 있는 화면은
+              전부 사람이 건드린 뒤에 모양이 바뀝니다 — 대시보드에 위젯이 늘고, 토폴로지에 선택과 경로가 생기고,
+              채팅이 메시지로 찹니다. 라벨이 사라지고 초점이 갈 곳이 없어지는 건 바로 그 상태들이고,
+              그중 어느 것도 로드 시점에는 존재하지 않습니다.
+            </p>
+          </div>
+          <div class="react-labs-grid react-labs-grid--four">
+            <article class="react-lab-card">
+              <span class="react-lab-status">발견 · vue</span>
+              <h3>페이지가 완전히 비어 있었습니다</h3>
+              <p><code>/customizable-dashboard</code>가 브라우저에서 아무것도 렌더링하지 않았고, 계속 그랬습니다.</p>
+              <ul>
+                <li>개인화 모듈이 <code>structuredClone</code>으로 복제하는데, 컴포넌트에서 오는 건 전부 <strong>반응형 Proxy</strong>라 복제할 수 없습니다</li>
+                <li>setup 중에 <code>DataCloneError</code>가 던져지고 아무도 잡지 않아 라우트가 죽었습니다</li>
+                <li>단위 테스트는 평범한 객체를 넘기니 볼 수 없고, 기존 e2e는 <em>“route”라는 단어가 든 오류만</em> 확인했습니다</li>
+                <li>React 포트에는 없는 문제입니다. 그래서 애초에 빠져 있었습니다</li>
+              </ul>
+              <code>toRaw</code>
+            </article>
+            <article class="react-lab-card">
+              <span class="react-lab-status">발견 · 토큰</span>
+              <h3>같은 색의 사본 네 개</h3>
+              <p>KPI 추세 텍스트가 3.76:1이었습니다. 따라가 보니 색 하나가 네 곳에 있었습니다.</p>
+              <ul>
+                <li>원시 Tailwind 클래스, 시맨틱 토큰(4.38 — 역시 미달), 그리고 <code>tailwind.config.js</code>의 hex 7개</li>
+                <li>토큰을 바꿔도 <strong>Tailwind가 옛 값을 계속 서빙</strong>했습니다. 생성물만 비교하는 게이트가 볼 이유가 없는 곳이었습니다</li>
+                <li>그 복제가 <code>muted</code>의 불일치도 감추고 있었습니다 (#647084 대 #64748b)</li>
+              </ul>
+              <code>var(--color-*)</code>
+            </article>
+            <article class="react-lab-card">
+              <span class="react-lab-status">발견 · 키보드</span>
+              <h3>초점 갈 곳이 없는 스크롤 영역</h3>
+              <p>스크롤되는데 초점을 받을 수 없으면 키보드로는 스크롤할 방법이 없습니다.</p>
+              <ul>
+                <li>Vue Flow의 확대·축소 버튼 3개에 접근 가능한 이름이 없었습니다. React Flow는 넣어줍니다</li>
+                <li>두 레이아웃의 <code>&lt;main&gt;</code>이 <code>overflow: auto</code>인데 초점 불가였습니다</li>
+                <li>next의 예제 페이지 셋에는 <strong>초점 가능한 요소가 하나도 없었습니다</strong> — 들어가는 링크만 있고 나오는 길이 없었습니다</li>
+              </ul>
+              <code>scrollable-region-focusable</code>
+            </article>
+            <article class="react-lab-card">
+              <span class="react-lab-status">게이트</span>
+              <h3>serious와 critical만</h3>
+              <p>axe의 minor·moderate는 대체로 권고입니다. 권고에 반응하는 게이트는 사람들이 건너뛰는 법을 배웁니다.</p>
+              <ul>
+                <li>로그인 폼과 예제 라우트 셋을 방문하고, <strong>상호작용 뒤에 다시</strong> 검사합니다</li>
+                <li>대비를 일부러 낮춰 실패하는 것을 확인했습니다</li>
+                <li>AA 미달 색 6건을 <strong>각자 속한 층위에서</strong> 고쳤습니다 — 팔레트 눈금이 아니라 시맨틱 토큰을</li>
+              </ul>
+              <code>axe-core/playwright</code>
+            </article>
+          </div>
+        </section>
+      </div>
+
+      <div class="pdf-page">
+        <section class="section" id="connection-vocabulary">
+          <div class="section-heading">
+            <p class="eyebrow">실시간 UX</p>
+            <h2>끊긴 것과 놓아준 것은 다릅니다</h2>
+            <p>
+              무료 인스턴스는 트래픽이 없으면 잠듭니다. 그런데 열린 WebSocket은 끊이지 않는 트래픽이라,
+              잊고 켜둔 탭 하나가 밤새 서비스를 깨워둡니다 — 실제로 쓰는 탭과 같은 비용으로요. 그래서 소켓이
+              스스로 물러나게 만들었고, <strong>그 순간 “연결 끊김”이 두 가지 뜻을 갖게 되었습니다.</strong>
+            </p>
+          </div>
+          <div class="react-labs-grid">
+            <article class="react-lab-card">
+              <span class="react-lab-status">정책</span>
+              <h3>두 개의 타임아웃</h3>
+              <p>“아무도 안 보고 있다”에는 두 가지 모양이 있습니다.</p>
+              <ul>
+                <li>탭이 숨겨짐 — 정의상 아무도 안 봅니다. <strong>1분</strong></li>
+                <li>보이지만 입력 없음 — 읽는 중일 수 있습니다. <strong>15분</strong></li>
+                <li>되살아나는 건 폴링이 아니라 실제 입력입니다. <code>scroll</code>과 <code>pointermove</code>는 사람 없이도 발생하므로 <strong>일부러 제외</strong>했습니다</li>
+              </ul>
+              <code>방치된 탭은 16분이면 잠듭니다</code>
+            </article>
+            <article class="react-lab-card">
+              <span class="react-lab-status">상태</span>
+              <h3>suspended</h3>
+              <p>유휴 해제를 <code>stop()</code>으로 하면 <code>disconnected</code>가 됩니다. 인터페이스가 고장으로 칠하는 상태입니다.</p>
+              <ul>
+                <li>고장이 아닌 것이 고장처럼 읽혀서는 안 되므로 <strong>자기 상태와 자기 복귀 경로</strong>를 갖습니다</li>
+                <li>중단은 재시도를 예약하지 않습니다. 멈춘 페이지는 누가 돌아올 때까지 멈춰 있습니다</li>
+                <li><code>suspended</code> 설정을 지우면 컨트롤러 테스트 2건이 실패하는 것을 확인했습니다</li>
+              </ul>
+              <code>suspend / resume</code>
+            </article>
+            <article class="react-lab-card">
+              <span class="react-lab-status">문구</span>
+              <h3>식별자를 그대로 보여주고 있었습니다</h3>
+              <p>상태 이름이 화면에 그대로 나갔습니다 — <code>disconnected</code>, <code>reconnecting</code>.</p>
+              <ul>
+                <li>라벨·문장·세 가지 톤으로 옮깁니다. <code>suspended</code>에만 복구 방법을 적었습니다 — <strong>고장난 것도 아니고 되살릴 버튼도 없는</strong> 유일한 상태라서요</li>
+                <li>배지 스타일이 상태별이라 <code>connected</code>가 아닌 모든 상태가 경고색이었고 새 상태는 스타일 없이 도착했습니다. 이제 톤 기준입니다</li>
+                <li>기존 테스트 5건이 옛 문구를 붙잡고 있다가 깨졌습니다. 그래야 맞습니다</li>
+              </ul>
+              <code>connectionStatus()</code>
+            </article>
+          </div>
+        </section>
+      </div>
+
+      <div class="pdf-page">
         <section class="section">
           <div class="section-heading">
             <p class="eyebrow">구현</p>
@@ -1127,6 +1333,27 @@ src/stores</code></pre>
                 채팅 소켓이 붙고, 밖에서 발행한 토폴로지 이벤트가 화면의 카운터를 바꾸는 것까지 확인했습니다.
                 프록시 뒤에서만 드러나는 것들 — TLS 종료, <code>TRUST_PROXY</code>, <code>Secure</code> 쿠키
                 발급 — 이 처음으로 검증되었습니다. 부하 측정은 여전히 없습니다.
+              </p>
+            </article>
+            <article>
+              <span>5</span>
+              <span class="roadmap-status roadmap-status--done">완료</span>
+              <h3>게이트를 실제로 켜기</h3>
+              <p>
+                토큰 게이트, 생성기 게이트, 의존성 검사, 그리고 next의 e2e — 넷 다 존재했고 CI에서
+                실행되지 않았습니다. 이제 실행됩니다. 커버리지에는 임계값이, Lighthouse에는
+                <code>error</code> 단언이 붙었고, 상호작용 뒤 상태를 검사하는 axe 스윕이 추가되었습니다.
+                켜자마자 나온 것들은 위 세 절에 적었습니다.
+              </p>
+            </article>
+            <article>
+              <span>6</span>
+              <span class="roadmap-status roadmap-status--partial">일부 완료</span>
+              <h3>남은 것</h3>
+              <p>
+                부하 측정은 여전히 없습니다 — 유계 큐와 느린 소비자 처리는 코드와 단위 테스트로만
+                뒷받침되어 있고 측정값이 아닙니다. 무료 인스턴스에서 부하를 거는 비용 대비 가치가 낮아
+                의도적으로 미뤘습니다. 외부 IdP와 MFA도 그대로 남아 있습니다.
               </p>
             </article>
           </div>
