@@ -56,13 +56,30 @@ a {
   font-weight: 900;
 }
 
+/* One scrolling row rather than a wrapping block.
+   The nav is a full table of contents, so it grows with the page — at 24 links
+   it wrapped to two rows and at 30 it took three, and the header is sticky, so
+   every extra row is permanently subtracted from what a reader can see. Scrolling
+   sideways costs the reader nothing and keeps the header one line however many
+   findings this page ends up recording. */
 nav {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 18px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
   color: var(--muted);
   font-size: 14px;
   font-weight: 700;
+}
+
+nav::-webkit-scrollbar {
+  display: none;
+}
+
+nav a {
+  white-space: nowrap;
 }
 
 .section,

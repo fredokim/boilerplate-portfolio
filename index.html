@@ -29,6 +29,12 @@
         <a href="#failure-vocabulary">실패 상태</a>
         <a href="#unreachable-states">도달할 수 없던 상태</a>
         <a href="#waking-server">잠든 서버</a>
+        <a href="#socket-contract">소켓 계약</a>
+        <a href="#chat-ordering">순서</a>
+        <a href="#doc-gates">문서 게이트</a>
+        <a href="#release-gate">릴리스 게이트</a>
+        <a href="#monorepo-decision">구조 재평가</a>
+        <a href="#self-audit">자체 감사</a>
         <a href="#wod-planner">WOD Planner</a>
         <a href="#ai-workflow">AI 워크플로우</a>
         <a href="#platform">플랫폼</a>
@@ -1057,6 +1063,395 @@
             이 문제는 사라집니다 — 그리고 월 750시간이 8일 만에 사라집니다. 서비스를 데모 사이에 서스펜드해두는
             운영 방침과 정면으로 충돌하는 해법이라, 넣지 않았습니다. 잠드는 것을 막는 대신
             <strong>깨우는 방식을 고쳤습니다.</strong>
+          </p>
+        </section>
+      </div>
+
+      <div class="pdf-page">
+        <section class="section" id="socket-contract">
+          <div class="section-heading">
+            <p class="eyebrow">실시간 계약</p>
+            <h2>HTTP 응답은 전부 검증하면서, 소켓은 그냥 믿고 있었습니다</h2>
+            <p>
+              모든 HTTP 응답은 화면에 닿기 전에 DTO로 검증합니다. 그런데 같은 도메인 객체를 나르는 소켓은
+              <code>parsed as ServerMessage</code> 한 줄로 통과시키고 있었습니다.
+              <strong>소켓이라서 믿은 것</strong>이지, 믿을 근거가 있어서 믿은 게 아니었습니다.
+            </p>
+          </div>
+          <div class="react-labs-grid react-labs-grid--four">
+            <article class="react-lab-card">
+              <span class="react-lab-status">발견</span>
+              <h3>코드가 이미 경고하고 있었습니다</h3>
+              <p>서버의 <code>topologyEvent.ts</code>에는 게이트웨이를 쓴 시점부터 이 주석이 있었습니다.</p>
+              <ul>
+                <li>“필드 이름을 틀려도 빌드는 실패하지 않는다 — 모든 이벤트가 알 수 없는 엔티티처럼 보이고 <strong>그래프가 조용히 갱신을 멈춘다</strong>”</li>
+                <li>그리고 아무것도 검사하지 않고 있었습니다</li>
+                <li>스토어는 <code>eventId</code>로 중복을 거르고 <code>sequence</code>로 정렬합니다 — <strong>존재 여부조차 보장받지 못한 두 필드</strong>로</li>
+              </ul>
+              <code>parsed as ServerMessage</code>
+            </article>
+            <article class="react-lab-card">
+              <span class="react-lab-status">계약</span>
+              <h3>발행된 명세에는 “아무거나 배열”이었습니다</h3>
+              <p>세 프론트엔드가 중복 제거와 정렬의 근거로 삼는 객체가 OpenAPI에 이렇게 실려 있었습니다.</p>
+              <ul>
+                <li><code>@ApiProperty({ type: [Object] }) events!: unknown[]</code></li>
+                <li>7개 필드를 가진 <code>TopologyEventDto</code>로 교체 — 이제 계약 검사가 이것도 봅니다</li>
+                <li>프로토콜 타입을 쓰다가 문서 어디에도 없던 필드가 나왔습니다: <code>joined</code>가 나르던 <code>nextCursor</code>와 <code>latestSequence</code></li>
+              </ul>
+              <code>unknown[] → TopologyEventDto</code>
+            </article>
+            <article class="react-lab-card">
+              <span class="react-lab-status">수정</span>
+              <h3>짝이 맞는지가 핵심이었습니다</h3>
+              <p>채팅은 히스토리 엔드포인트가 쓰던 DTO를 그대로 재사용했습니다. 토폴로지는 그럴 수 없었습니다.</p>
+              <ul>
+                <li>토폴로지 이벤트는 <strong>판별 유니온</strong>입니다. <code>NODE_STATUS_CHANGED</code>가 <code>metrics</code>를 나르는 것이 바로 그 주석이 경고한 “엉뚱한 표에 적용된 payload”입니다</li>
+                <li>평평한 DTO는 그 말을 할 수 없어서 검증기를 손으로 썼습니다</li>
+                <li>close code는 HTTP 사촌에 맞췄습니다 — 4401/4403/4400/4429/4408</li>
+              </ul>
+              <code>4429 = 429</code>
+            </article>
+            <article class="react-lab-card">
+              <span class="react-lab-status">함정</span>
+              <h3>검증한 객체와 넘긴 객체가 달랐습니다</h3>
+              <p>첫 검증기는 인스턴스를 검증하고 <strong>원본 payload를 반환</strong>했습니다.</p>
+              <ul>
+                <li>DTO의 초기값이 사본의 빈 필드를 채웁니다 — <code>body</code>가 없는 메시지가 통과합니다</li>
+                <li>그리고 스토어는 자기 타입이 약속한 필드가 없는 객체를 받습니다</li>
+                <li>검증한 인스턴스를 반환하도록 고쳤습니다. <strong>검증과 전달의 대상이 같아야 한다</strong>는, 쓰고 나서야 보인 조건</li>
+              </ul>
+              <code>return instance</code>
+            </article>
+          </div>
+          <p class="react-lab-note">
+            세 저장소의 실시간 코어 11개 파일은 줄바꿈과 따옴표만 맞추면
+            <strong>한 글자도 다르지 않습니다.</strong> 그게 의도라서, 어긋나면 알려주는 검사를 따로 만들었습니다
+            — <code>npm run realtime:parity</code>.
+          </p>
+        </section>
+      </div>
+
+      <div class="pdf-page">
+        <section class="section" id="chat-ordering">
+          <div class="section-heading">
+            <p class="eyebrow">순서</p>
+            <h2>서버의 두 문서가 서로 반대를 말하고 있었습니다</h2>
+            <p>
+              <code>schema.prisma</code>는 <code>sentAt</code> 옆에 “ordering depends on this”라고 적어뒀고,
+              <code>ChatMessageDto.sequence</code>에는 설명이 아예 없었습니다. 둘 다 맞을 수는 없고,
+              <strong>스키마 쪽이 틀린 것</strong>이었습니다.
+            </p>
+          </div>
+          <div class="react-labs-grid react-labs-grid--four">
+            <article class="react-lab-card">
+              <span class="react-lab-status">원인</span>
+              <h3>두 숫자는 서로 다른 순간에 정해집니다</h3>
+              <p>같은 트랜잭션 안에 있어도 같은 순서가 아닙니다.</p>
+              <ul>
+                <li><code>sentAt</code>은 <code>@default(now())</code> — PostgreSQL의 <code>now()</code>는 <strong>트랜잭션 시작 시각</strong></li>
+                <li><code>sequence</code>는 broadcast 행의 <strong>락을 잡는 시점</strong>에 발급</li>
+                <li>먼저 시작한 트랜잭션이 나중에 락을 잡으면 <strong>두 순서가 어긋납니다</strong></li>
+              </ul>
+              <code>now() = transaction start</code>
+            </article>
+            <article class="react-lab-card">
+              <span class="react-lab-status">영향</span>
+              <h3>클라이언트는 스키마가 시킨 대로 하고 있었습니다</h3>
+              <p>세 프론트엔드 모두 시계로 정렬했습니다.</p>
+              <ul>
+                <li>transport가 <code>sequence</code>를 재개 지점으로 추적한 뒤 <code>toChatMessage</code>에서 <strong>버렸습니다</strong></li>
+                <li>스토어는 <code>Date.parse(timestamp)</code>로 정렬하고, 그보다 오래된 메시지를 버렸습니다</li>
+                <li>어긋난 한 쌍은 거꾸로 렌더링되거나 최신 메시지가 “too old”로 사라집니다 — <strong>둘 다 화면에 있고 둘 다 읽히니 흔적이 없습니다</strong></li>
+              </ul>
+              <code>droppedTooOld</code>
+            </article>
+            <article class="react-lab-card">
+              <span class="react-lab-status">징후</span>
+              <h3>mock이 같은 혼동을 픽스처로 갖고 있었습니다</h3>
+              <p>목 transport의 타임스탬프 생성 코드가 이랬습니다.</p>
+              <ul>
+                <li><code>timestamp: new Date(Date.now() + index)</code></li>
+                <li>타임스탬프가 순서였기 때문에 <strong>오르는 시계를 흉내</strong>내고 있었던 겁니다</li>
+                <li><code>sequence</code>가 존재하는 이유가 바로 그 혼동을 없애기 위해서입니다</li>
+              </ul>
+              <code>Date.now() + index</code>
+            </article>
+            <article class="react-lab-card">
+              <span class="react-lab-status">증명</span>
+              <h3>옛 정렬에서 실패하는 테스트 두 개</h3>
+              <p>고치기 전에 실패하는 것을 먼저 확인했습니다.</p>
+              <ul>
+                <li>타임스탬프가 반대로 말할 때 <code>sequence</code>로 정렬하는가</li>
+                <li>시계가 오래됐다고 하지만 <code>sequence</code>가 최신이라고 하는 메시지를 지키는가</li>
+                <li>세 저장소 각각 <strong>2 failed → 0 failed</strong>. 나머지 스위트는 영향 없음</li>
+              </ul>
+              <code>2 failed | 7 passed</code>
+            </article>
+          </div>
+          <p class="react-lab-note">
+            발행된 DTO는 이제 네 필드가 각각 무엇인지 말합니다. <code>id</code>는 저장된 행,
+            <code>clientMessageId</code>는 <strong>전송 시도</strong>(재시도를 멱등하게 만들고 아무것도 정렬하지 않음),
+            <code>sequence</code>는 방의 순서이자 재개 지점, <code>sentAt</code>은 표시용입니다.
+          </p>
+        </section>
+      </div>
+
+      <div class="pdf-page">
+        <section class="section" id="doc-gates">
+          <div class="section-heading">
+            <p class="eyebrow">문서</p>
+            <h2>문서 검사가 내용이 아니라 철자를 강제하고 있었습니다</h2>
+            <p>
+              <code>check:ai</code>라는 CI 게이트가 있었습니다. 문서가 특정 <strong>문자열</strong>을 포함하는지
+              검사합니다. 헤딩을 더 명확하게 고치면 <strong>CI가 실패</strong>하고, 그 섹션의 내용을 헛소리로
+              바꾸면 <strong>통과</strong>합니다. 양쪽 다 실행해서 확인했습니다.
+            </p>
+          </div>
+          <div class="react-labs-grid react-labs-grid--four">
+            <article class="react-lab-card">
+              <span class="react-lab-status">발견</span>
+              <h3>마지막 단언은 자기 자신이었습니다</h3>
+              <p>63~68행이 검사하던 것은 이랬습니다.</p>
+              <ul>
+                <li><code>package.json</code>에 <code>"check:ai"</code>가 있는가</li>
+                <li><code>ci.yml</code>에 <code>npm run check:ai</code>가 있는가</li>
+                <li>남은 역할이 <strong>자기 삭제를 감지하는 것</strong>뿐인 검사였습니다</li>
+              </ul>
+              <code>assertIncludes(packageJson, '"check:ai"')</code>
+            </article>
+            <article class="react-lab-card">
+              <span class="react-lab-status">측정</span>
+              <h3>문서 22개, 서로 링크 0개</h3>
+              <p>프론트엔드마다 루트에 22개 markdown이 있었고, 서로를 한 번도 참조하지 않았습니다.</p>
+              <ul>
+                <li>README는 백틱 파일명으로 <strong>나열만</strong> 했습니다 — 누를 수 없습니다</li>
+                <li><code>check:ai</code>가 요구한 건 “README가 <code>"DEPLOYMENT.md"</code> 문자열을 포함할 것” — 맨 파일명으로 만족됩니다</li>
+                <li>도달성 규칙을 옛 배치에 돌리자 <strong>README 아닌 18개 전부가 orphan</strong></li>
+              </ul>
+              <code>18 orphans</code>
+            </article>
+            <article class="react-lab-card">
+              <span class="react-lab-status">교체</span>
+              <h3>철자 대신 도달 가능성</h3>
+              <p><code>check:docs</code>에 규칙 두 개를 넣고 <code>check:ai</code>를 지웠습니다.</p>
+              <ul>
+                <li>상대 markdown 링크가 <strong>실제로 해석될 것</strong></li>
+                <li>모든 문서가 README에서 <strong>링크를 따라 도달 가능할 것</strong></li>
+                <li>이름을 바꾸면 링크가 깨지고, 도달성은 옛 검사가 구조적으로 볼 수 없던 경우를 잡습니다</li>
+              </ul>
+              <code>docs/{architecture,api,development,deployment,history}</code>
+            </article>
+            <article class="react-lab-card">
+              <span class="react-lab-status">확장</span>
+              <h3>검사가 독자를 따라가게</h3>
+              <p>메타 저장소의 README는 절반이 <strong>다른 저장소에서 실행하는 명령</strong>입니다.</p>
+              <ul>
+                <li>그대로 검사하면 전부 올바른 문서인데 4건이 실패합니다</li>
+                <li>흔한 해법(“코드 블록은 검사하지 말자”)은 <strong>가장 잘 썩는 절반을 포기</strong>하는 것</li>
+                <li><code>git clone</code>/<code>cd</code>가 저장소를 옮기고, 제목이 세션을 끝내고, 체크아웃 안 된 형제는 건너뜁니다</li>
+              </ul>
+              <code>npm run start:dev</code>
+            </article>
+          </div>
+          <p class="react-lab-note">
+            새 검사는 <strong>제가 방금 쓴 오류를 즉시 잡았습니다</strong> — quick start가 서버에서
+            <code>npm run dev</code>를 실행하라고 했는데, 서버에 있는 건 <code>start:dev</code>입니다.
+          </p>
+        </section>
+      </div>
+
+      <div class="pdf-page">
+        <section class="section" id="release-gate">
+          <div class="section-heading">
+            <p class="eyebrow">릴리스</p>
+            <h2><code>&amp;&amp;</code> 체인은 어느 게이트가 실패했는지 숨깁니다</h2>
+            <p>
+              열세 개 스크립트를 <code>&amp;&amp;</code>로 이어붙인 것이 릴리스 검사였습니다. 첫 실패에서 멈추고,
+              그게 몇 번째였는지는 수백 줄 출력 어딘가에 묻힙니다. 가정이 아니라
+              <strong>이 작업 중에 저를 속인 방식</strong>입니다.
+            </p>
+          </div>
+          <div class="react-labs-grid react-labs-grid--four">
+            <article class="react-lab-card">
+              <span class="react-lab-status">사건</span>
+              <h3>경로 문제를 의존성 고발로 바꿔놓았습니다</h3>
+              <p>문서를 <code>docs/</code>로 옮기자 <code>check:deps</code>가 깨졌습니다.</p>
+              <ul>
+                <li>스크립트가 <code>DEPENDENCY_STRATEGY.md</code>를 루트에서 읽고 있었습니다</li>
+                <li>없으면 <strong>조용히 빈 문자열</strong>로 떨어지고, 다음 루프가 “hls.js에 근거가 없다”고 보고합니다</li>
+                <li>체인은 패키지 크기 표를 찍었고, 열셋 중 아홉 번째가 실패했다는 힌트는 없었습니다</li>
+              </ul>
+              <code>existsSync(...) ? read : ''</code>
+            </article>
+            <article class="react-lab-card">
+              <span class="react-lab-status">발견</span>
+              <h3>두 목록이 이미 어긋나 있었습니다</h3>
+              <p>CI는 14단계를 돌리고 <code>check:ci</code>는 13개를 이었습니다.</p>
+              <ul>
+                <li><code>check:tokens</code>, <code>check:docs</code>, <code>check:generators</code>가 체인에만 있고 워크플로에 없었습니다</li>
+                <li>즉 <strong>PR에서는 아예 실행되지 않았습니다</strong></li>
+                <li>이제 CI와 로컬이 <strong>같은 목록</strong>을 돌립니다</li>
+              </ul>
+              <code>npm run release</code>
+            </article>
+            <article class="react-lab-card">
+              <span class="react-lab-status">원칙</span>
+              <h3>건너뛴 게이트는 통과가 아닙니다</h3>
+              <p>Docker나 데이터베이스가 없으면 이유와 함께 <code>skipped</code>로 보고합니다.</p>
+              <ul>
+                <li>그리고 요약이 “Ready to release”라고 말하기를 <strong>거부합니다</strong></li>
+                <li>게이트 넷이 실행되지 않은 실행에서 준비됐다고 보고하는 것이, 이 작업 전체가 고쳐온 실패입니다</li>
+                <li>실패한 게이트마다 이름·무엇을 증명하는지·출력 꼬리를 따로 찍습니다</li>
+              </ul>
+              <code>11 passed, 0 failed, 3 skipped</code>
+            </article>
+            <article class="react-lab-card">
+              <span class="react-lab-status">수확</span>
+              <h3>게이트가 첫 실행에서 둘을 잡았습니다</h3>
+              <p>서버에서 바로 나온 것들입니다.</p>
+              <ul>
+                <li><code>TRUST_PROXY</code>가 <code>main.ts</code>에서 읽히는데 <strong>어디에도 문서화되지 않음</strong> — 로드밸런서 뒤에서 안 켜면 모든 요청과 세션이 클라이언트 대신 밸런서 주소를 기록합니다</li>
+                <li><code>prisma format --check</code>가 <strong>모든 Windows 체크아웃에서 실패</strong>하고 있었습니다. <code>.gitattributes</code>가 같은 이유로 다른 파일은 이미 LF에 고정했는데 스키마만 빠져 있었습니다</li>
+                <li>CI는 Linux라 통과합니다 — <strong>로컬에서 돌리려는 사람만 보는 실패</strong></li>
+              </ul>
+              <code>text eol=lf</code>
+            </article>
+          </div>
+          <p class="react-lab-note">
+            네 저장소의 게이트 목록은 <strong>일부러 다릅니다.</strong> 서버에는 번들 예산도 Storybook도 없고
+            스키마·마이그레이션·OpenAPI drift가 있습니다. Next에는 이미지 게이트가 없습니다 — Dockerfile이 아니라
+            Node 런타임으로 배포하니 <strong>빌드할 이미지가 없습니다.</strong>
+          </p>
+        </section>
+      </div>
+
+      <div class="pdf-page">
+        <section class="section" id="monorepo-decision">
+          <div class="section-heading">
+            <p class="eyebrow">구조</p>
+            <h2>모노레포로 갈지, 숫자로 다시 물었습니다</h2>
+            <p>
+              멀티레포를 택한 건 도구가 생기기 전이었습니다. 예측이었죠. 이제 측정이 있으니
+              그 예측이 맞았는지 다시 봤습니다. <strong>전환이 아니라 결정이고</strong>,
+              “요즘 다들 모노레포니까” 같은 근거는 허용하지 않았습니다.
+            </p>
+          </div>
+          <div class="react-labs-grid react-labs-grid--four">
+            <article class="react-lab-card">
+              <span class="react-lab-status">비용</span>
+              <h3>세금은 실재합니다</h3>
+              <p>하루치 작업을 다섯 저장소에서 세어봤습니다.</p>
+              <ul>
+                <li>서로 다른 변경 <strong>31개</strong>에 PR <strong>50개</strong></li>
+                <li>변경 11개(<strong>35%</strong>)가 두 개 이상 저장소에 걸쳤습니다</li>
+                <li>PR의 <strong>60%</strong>가 변경이 저장소를 가로질렀다는 이유만으로 존재했습니다</li>
+              </ul>
+              <code>35% cross-repo</code>
+            </article>
+            <article class="react-lab-card">
+              <span class="react-lab-status">측정</span>
+              <h3>무엇이 진짜 공유 가능한지</h3>
+              <p>프론트당 약 2,000줄이 95~100% 동일합니다. 그런데 하나가 다릅니다.</p>
+              <ul>
+                <li>실시간 코어 11개 파일: <strong>0줄 차이</strong></li>
+                <li><code>check-docs</code> 9줄, <code>check-env-example</code> 2줄, <code>check-bundle-budget</code> 8줄</li>
+                <li><code>check-generators.ts</code>: <strong>164줄 중 161줄이 다름</strong> — 각 저장소 자신의 기능 계약을 검사하기 때문입니다</li>
+              </ul>
+              <code>161 / 164</code>
+            </article>
+            <article class="react-lab-card">
+              <span class="react-lab-status">기각</span>
+              <h3>공유 패키지는 값을 못 합니다</h3>
+              <p>도구만 별도 저장소로 빼는 안(B)을 검토했습니다.</p>
+              <ul>
+                <li>cross-repo 변경 11개 중 <strong>대부분이 도구가 아니라 동작</strong>이었습니다 — 채팅 정렬, 소켓 검증, 연결 상태</li>
+                <li>B는 11개 중 3~4개를 줄였을 겁니다</li>
+                <li>그러면서 clone한 저장소가 <strong>독자가 가장 봐야 할 코드</strong>를 레지스트리 의존으로 만듭니다</li>
+              </ul>
+              <code>3~4 of 11</code>
+            </article>
+            <article class="react-lab-card">
+              <span class="react-lab-status">결정</span>
+              <h3>C는 만들고 있는 것을 없앱니다</h3>
+              <p>모노레포는 측정된 비용을 전부 없앱니다. 그리고 하나 더 없앱니다.</p>
+              <ul>
+                <li>boilerplate는 clone되려고 존재하고, <strong>모노레포는 부분 clone이 안 됩니다</strong></li>
+                <li>세 구현이 <code>node_modules</code> 하나와 tsconfig 하나를 공유하면 “아키텍처가 세 프레임워크를 견딘다”는 <strong>증명이 사라집니다</strong> — 당연히 견디죠, 같은 프로젝트니까</li>
+                <li>통합 논거는 전부 <strong>우리 비용</strong>, 반대 논거는 전부 <strong>클론하는 사람의 가치</strong>에 관한 것입니다</li>
+              </ul>
+              <code>A. 현행 유지</code>
+            </article>
+          </div>
+          <p class="react-lab-note">
+            재검토 조건은 기분이 아니라 <strong>임계값</strong>으로 적었습니다 — 네 번째 프론트엔드,
+            cross-repo 변경이 지속적으로 50% 초과, 프론트가 독립적으로 clone 불가능해짐, 조율된 변경이
+            미완인 채 프로덕션 도달. 오늘 기준 하나도 참이 아닙니다.
+          </p>
+        </section>
+      </div>
+
+      <div class="pdf-page">
+        <section class="section" id="self-audit">
+          <div class="section-heading">
+            <p class="eyebrow">자체 감사</p>
+            <h2>제 작업을 원본 요구사항과 대조했습니다</h2>
+            <p>
+              열 단계를 마친 뒤, 프롬프트 원문을 다시 꺼내 항목별로 대조했습니다. 기억이 아니라
+              저장소에서 검증했습니다. 작업 요구사항 <strong>79개 중 74개</strong>, 완료조건
+              <strong>29개 중 27개</strong>. 그리고 <strong>미충족 5건과 제가 만든 오류 3건</strong>이 나왔습니다.
+            </p>
+          </div>
+          <div class="react-labs-grid react-labs-grid--four">
+            <article class="react-lab-card">
+              <span class="react-lab-status">누락</span>
+              <h3>계약 문서를 재편하지 않았습니다</h3>
+              <p>요구사항은 “스키마 중복이 아니라 오류 의미·인증 정책·전달 의미·멱등성·버전 의미·보안 정책 중심으로” 였습니다.</p>
+              <ul>
+                <li>endpoint별 필드 목록이 그대로 남아 있었습니다 — <strong>없애라고 한 바로 그것</strong></li>
+                <li>vue의 것은 중복이 아니라 <strong>틀린 것</strong>이었습니다: 코드가 자기 주석에 “이 서버의 어떤 응답도 만족할 수 없다”고 적어둔 envelope을 설명하고 있었습니다</li>
+                <li>권한 정보는 OpenAPI에 <strong>0회</strong> 등장합니다. 33개 operation이 보호됨을 선언하지만 무엇을 요구하는지는 없습니다</li>
+              </ul>
+              <code>"graph:write" × 0</code>
+            </article>
+            <article class="react-lab-card">
+              <span class="react-lab-status">자책</span>
+              <h3>계약인 척하며 아무것도 강제하지 않던 타입</h3>
+              <p>제가 5단계에서 쓴 <code>ChatClientFrame</code>이 그것이었습니다.</p>
+              <ul>
+                <li>클라이언트가 보낼 수 있는 모든 메시지의 모양을 선언해놓고 <strong>아무것도 참조하지 않았습니다</strong></li>
+                <li>게이트웨이의 파서가 반환 타입을 손으로 따로 썼습니다 — 둘이 어긋나도 말해주는 게 없습니다</li>
+                <li>이 저장소가 남의 코드에서 계속 찾아내던 결함의 모양을, <strong>제가 한 단계 반 동안 들고 있었습니다</strong></li>
+              </ul>
+              <code>1 reference: its own definition</code>
+            </article>
+            <article class="react-lab-card">
+              <span class="react-lab-status">발굴</span>
+              <h3>무관한 앱 2,134줄</h3>
+              <p>미사용 export를 파다가 <code>src/crawler/</code>가 나왔고, 그건 빙산의 일각이었습니다.</p>
+              <ul>
+                <li>Next 보일러플레이트 안에 <strong>WOD planner 앱 전체</strong> — 22개 파일, 첫 커밋부터</li>
+                <li>어느 라우트에서도 도달 불가. 동적 import도 테스트도 없음</li>
+                <li>랜딩 페이지 주석이 “플래너는 아직 자기 라우트가 있다”고 했지만 <strong>라우트는 사라졌고 앱만 남아 있었습니다</strong></li>
+              </ul>
+              <code>22 files, 2,134 lines</code>
+            </article>
+            <article class="react-lab-card">
+              <span class="react-lab-status">절제</span>
+              <h3>만들지 않기로 한 게이트</h3>
+              <p>“미사용 export 금지”는 여기서 <strong>상황을 나쁘게 만드는</strong> 검사입니다.</p>
+              <ul>
+                <li>측정: react 26 / next 24 / vue 41 / 서버 3개</li>
+                <li>대부분은 <code>setLoggerAdapter</code>, <code>useBreakpoint</code>처럼 <strong>클론한 사람이 쓰라고 둔 affordance</strong></li>
+                <li>기계적으로 성립하는 구분은 하나뿐 — <strong>protocol 파일은 import되기 위해서만 존재합니다.</strong> 거기까지만 만들었습니다</li>
+              </ul>
+              <code>check:protocol</code>
+            </article>
+          </div>
+          <p class="react-lab-note">
+            새 게이트도 <strong>첫 실행에서 제 규칙을 잡았습니다.</strong> “자기 파일 밖에서 참조될 것”을 요구했더니
+            <code>ErrorCodeValue</code>가 걸렸는데, 여섯 줄 아래 함수의 반환 타입으로 import 없이 실제로 일하고
+            있었습니다. 규칙은 “무언가가 참조할 것”이지 “저쪽에서 참조할 것”이 아닙니다.
           </p>
         </section>
       </div>

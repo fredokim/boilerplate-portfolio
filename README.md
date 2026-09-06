@@ -1,7 +1,11 @@
 # Typed UI Boilerplate Portfolio
 
-Vue 3, React, Next.js 보일러플레이트와, React 보일러플레이트에 붙인 NestJS 백엔드를 소개하기 위한
-정적 포트폴리오 페이지입니다.
+React, Next.js, Vue 보일러플레이트와 셋이 공유하는 NestJS 백엔드를 소개하기 위한 정적 포트폴리오
+페이지입니다.
+
+백엔드는 처음 React 보일러플레이트 안에 있었지만, 세 프론트엔드가 함께 쓰게 되면서 자기 저장소로
+분리됐습니다. 다섯 번째 저장소 [BOILPLATE](https://github.com/fredokim/BOILPLATE)이 넷의 진입점이고,
+공유 정책·ADR·`create-fredo-app` 생성기가 거기 있습니다.
 
 ## 포함 자료
 

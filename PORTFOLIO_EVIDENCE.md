@@ -110,9 +110,12 @@ Reason:
 - CI-friendly verification commands for lint, typecheck, test, build, Storybook build, dependency review, and bundle budgets.
 - AI workflow documents, prompt playbook, code review checklist, and refactoring case study.
 - Next.js `/ops-console` proof surface for B2B dashboard, i18n, live updates, DTO validation, release status, and performance metrics.
-- A NestJS backend the existing frontend talks to unchanged, verified end to end against a hosted PostgreSQL.
-- Five CI jobs: frontend, server, integration against a real PostgreSQL, consumer contract, and a container smoke test.
-- 506 automated tests across both packages, plus 4 Playwright specs in a real browser.
+- A NestJS backend all three frontends talk to unchanged, verified end to end against a hosted PostgreSQL.
+- The server's CI runs all three frontends' contract tests against the specification a pull request *would* produce, so a breaking change fails in the repository that caused it.
+- One release command per repository — `npm run release` — sharing its gate list with CI, reporting every failure rather than the first, and refusing to report readiness when a gate was skipped.
+- `create-fredo-app` generates a project from any framework with or without the backend; CI builds all six combinations and runs install, typecheck, test and build in each.
+- **1,181 automated tests**, measured: 305 React, 276 Next, 256 Vue, 235 server unit and 109 server end-to-end. Plus Playwright specs in a real browser and a container smoke test per deployable repository.
+- Eight architecture decision records, each with the alternatives considered and what the choice costs — including where a decision is not enforced by anything.
 
 ## React Interactive Examples
 
@@ -164,6 +167,20 @@ Every gate was passing — tests, typecheck, build, bundle budget, e2e — while
 3. **Token refresh was never wired.** A single-flight refresh helper existed, fully tested, and nothing called it, so sessions ended silently at the access token's lifetime. After wiring it, four parallel 401s were observed producing exactly one refresh — with a rotating token, four would have been read as replay and revoked the session family.
 4. **A CI step that reported success without running.** The seed returned early when optional environment variables were absent, so the step passed while leaving most of the file unexecuted. It now runs in full, twice, because idempotence is a property only a second run demonstrates.
 
+## Gates That Could Not Fail
+
+The section above is about gates that passed while the code was broken. These are worse: gates that could not have failed for any reason worth caring about, and were removed or replaced.
+
+1. **A documentation check that enforced spelling.** `check:ai` asserted that documents contained particular strings — `AI_WORKFLOW.md` had to include `"Developer-Owned Decisions"`. Renaming that heading to something clearer **failed CI**; replacing the section's contents with nonsense **passed**. Both were run to confirm. It also asserted the README contained the string `"DEPLOYMENT.md"`, which a bare filename satisfies — and that was exactly the state of the repository: 22 documents in the root, cross-linked **zero** times, listed as backticked filenames nobody could click. Its last assertions were that `package.json` contained `"check:ai"` and `ci.yml` contained `npm run check:ai`; its remaining job was noticing its own removal. Replaced by two rules that can fail for real reasons — a relative link must resolve, and every document must be reachable from the README. Run against the old layout, the second reported all 18 non-README documents as orphans.
+
+2. **A realtime event published as `unknown[]`.** `TopologyReplayDto.events` — the one object three frontends de-duplicate and order on — appeared in the OpenAPI document as an array of anything. The server's own `topologyEvent.ts` had carried a comment about exactly this risk since the gateway was written: *"getting a field name wrong here does not fail a build — it makes every event look like an unknown entity and the graph quietly stops updating."* Nothing was checking. Every HTTP response was validated against a DTO before a view saw it; the socket carrying the same domain objects was cast and trusted.
+
+3. **Two documents on the server contradicting each other about ordering.** `schema.prisma` said "ordering depends on this" beside `sentAt`; `ChatMessageDto.sequence` had no description at all. The schema was wrong: `sentAt` is `@default(now())`, and in Postgres `now()` is *transaction start* time, while `sequence` is allocated when the write takes the broadcast row's lock. Two concurrent sends can receive their sequences in one order and their timestamps in the other. All three clients sorted on the timestamp, exactly as the schema told them to.
+
+4. **A chain that hid which gate failed.** Release checking was thirteen scripts joined with `&&`. Moving the documents into `docs/` broke `check:deps`, which read its strategy document from the repository root and **silently fell back to an empty string** when it was missing — so it reported "hls.js has a raised size cap but no reason recorded", an accusation about a dependency for a problem with a path. Nothing in several hundred lines of output said the ninth of thirteen steps had failed. `npm run release` now runs every gate, names each one, and refuses to say "ready" when any were skipped.
+
+5. **A type that claimed to be a contract and enforced nothing.** `ChatClientFrame` declared the shape of every message a client may send, and nothing referenced it — the gateway's parser wrote its own return type by hand. This one was mine, found in a self-audit against the original requirements, and it had been there for a stage and a half. The parsers now derive their return types from the unions; renaming a field in one fails the build in four places.
+
 ## Deployment Shape
 
 The refresh token is an HttpOnly cookie with `sameSite: lax`. Hosting the client on a different origin from the API means the browser never sends it: sign-in succeeds and the session then ends without explanation. The WebSocket gateways fail the same way behind a rewrite layer. So the client and the API ship as one image and share an origin, which is also what the development proxy has been emulating.
@@ -192,12 +209,21 @@ Trade-offs:
 
 Next improvements:
 
-This list was written before the backend existed, and surveying the repositories to plan the next two items showed that two of the entries described a starting point that no longer holds. Restated against what is actually there:
+This list has been rewritten twice, because the survey needed to plan each item kept showing that the item was already done or was never the problem. What follows is the state as measured, not as remembered.
 
-- **A single design-token source.** Not a missing feature — three sets already exist and disagree. `--color-line`, `--color-success`, and `--color-surface` hold different values in the React and Next repositories, Next carries five tokens and a shadow file React does not, and Vue uses a separate `--ds-` namespace alongside a runtime `applyTheme` that writes over it. The work is a structure where the values cannot diverge, plus a CI check, not a one-time reconciliation.
-- **Generators that follow the repository's own conventions.** Six generators exist. The feature generator produces something the router cannot see: the registry globs `@features/**/routes/*.route.tsx` and three features are registered that way, but the generator never creates that directory. It also leaves `api/` and `hooks/` empty and writes neither a story nor a test. The check that should catch this asserts four generator files exist, never runs one, and does not include the feature generator.
-- **Auth beyond first-party credentials.** Password auth, rotating sessions, and permission guards now exist server-side. External identity providers and MFA were deliberately excluded and remain unimplemented. Feature flags do not exist in any repository.
-- **More accessibility coverage.** One a11y test exists (`Button.a11y.test.tsx`). End-to-end tests now run in CI, which they did not when this list was written, but there are four specs in a single file.
+**Done since, with the check that keeps it done:**
+
+- **A single design-token source.** Three sets used to disagree — `--color-line`, `--color-success` and `--color-surface` held different values in React and Next, and Vue used a separate `--ds-` namespace overwritten at runtime. All three now generate from `tokens/tokens.json`, and `check:tokens` renders the outputs and compares them against what is committed. It compares rather than regenerates on purpose: a check that rewrites the file it is checking cannot fail.
+- **Generators that follow the repository's own conventions.** The feature generator used to produce something the router could not see, and the check that should have caught it asserted four generator *files existed* without running one. `check:generators` now runs each generator and compares its output against `FEATURE_CONTRACT.md`.
+- **Documentation that can be found.** 22 root documents with zero cross-links became `docs/{architecture,api,development,deployment,history}`, and `check:docs` fails when a link does not resolve or a document is unreachable from the README.
+- **One release command.** `npm run release` in all four repositories, sharing its gate list with CI, reporting every failure rather than the first, and refusing to say "ready" when gates were skipped.
+
+**Still open, and honest about why:**
+
+- **Auth beyond first-party credentials.** Password auth, rotating sessions and permission guards exist server-side. External identity providers and MFA were deliberately excluded. Vue's client-side social flow calls `/api/auth/oauth/…`, which the backend implements not at all — recorded as a known divergence in the contract test rather than left to be discovered.
+- **Accessibility coverage is thin.** One a11y test in React, two in Next, none in Vue. End-to-end tests do run in CI now, which they did not when this list was first written, but there are two to three specs per repository.
+- **`exactOptionalPropertyTypes`.** The one baseline compiler option not met everywhere: 62 errors in Vue, 6 in the server. Measured with a forced full typecheck rather than estimated, and priced rather than promised.
+- **Nothing checks that a coordinated change landed everywhere.** The parity check covers eleven realtime files and the contract tests cover the API surface; a shared convention outside both is on whoever changed it. This is the cost of four repositories, stated in ADR 0008 rather than wished away.
 - Split templates into lightweight, standard, and strict modes.
 
 ## Related Files
